@@ -6,6 +6,9 @@ const {
   verifyRegistrationOtp,
 } = require("../../controllers/merchant/authController");
 const { catchAsync } = require("../../utils/catchAsync");
+const {
+  getIpAndLocation,
+} = require("../../middlewares/shared/ipLocationMiddleware");
 
 const sendRegistrationOtpValidator = [
   body("category")
@@ -80,6 +83,7 @@ router.post(
 router.post(
   "/registration/verify-otp",
   verifyRegistrationOtpValidator,
+  catchAsync("getIpAndLocation middleware", getIpAndLocation),
   catchAsync("verifyRegistrationOtp api", verifyRegistrationOtp)
 );
 
