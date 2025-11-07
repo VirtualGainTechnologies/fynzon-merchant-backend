@@ -1,12 +1,7 @@
-
 const { body } = require("express-validator");
 const router = require("express").Router();
 
-
-
-const {
-    sendOtpEmail
-} = require("../../controllers/merchant/authController");
+const { sendOtpEmail } = require("../../controllers/merchant/authController");
 const { catchAsync } = require("../../utils/catchAsync");
 
 const emailOtpValidator = [
@@ -22,12 +17,10 @@ const emailOtpValidator = [
     .toLowerCase(),
 ];
 
+router.post(
+  "/send-email-otp",
+  emailOtpValidator,
+  catchAsync("sendOtpToEmail api", sendOtpEmail)
+);
 
-router
-    .post(
-        "/send-email-otp",
-        emailOtpValidator,
-        catchAsync("sendOtpToEmail api", sendOtpEmail)
-        )
-    
 module.exports = router;

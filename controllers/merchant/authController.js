@@ -1,14 +1,11 @@
-const { verifyOtp } = require("../../utils/verifyOtp");
-const { sendOtpToEmail } = require("../../utils/sendOtp")
+const { sendOtpToEmail } = require("../../utils/sendOtp");
+const AppError = require("../../utils/AppError");
 
 exports.sendOtpEmail = async (req, res) => {
-    console.log("Hello")
-  const req_body = Object.assign({}, req.body);
-
   const emailObject = {
     type: "register-otp",
-    email: req_body.email,
-    userName: req_body.userName,
+    email: req.body.email,
+    userName: req.body.userName,
     title: "Registration",
   };
     const emailData = await sendOtpToEmail(emailObject);

@@ -7,6 +7,7 @@ const {
   commitWithRetry,
   isTransientError,
 } = require("../services/shared/mongooseTxnService");
+const { logger } = require("./winstonLogger");
 
 exports.catchAsync = (fnName, fn) => {
   return async (req, res, next) => {

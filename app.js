@@ -66,11 +66,10 @@ app.set("trust proxy", true);
 app.use(useragent.express());
 
 // data sanitisation against NoSql query injection
-app.use(mongoSanitize());
+// app.use(mongoSanitize());
 
 // data sanitisation against xss
-app.use(xss());
-
+// app.use(xss());
 //---------router imports---------//
 // admin-router-imports
 // merchant-router-imports
