@@ -15,7 +15,7 @@ const { logger } = require("./utils/winstonLogger");
 require("dotenv").config();
 // start express app
 const app = express();
-logger.log("Running environment is ===>", app.get("env"));
+logger.info("Running environment is ===>", app.get("env"));
 
 // compress response bodies for all request
 app.use(
@@ -88,9 +88,8 @@ app.use("/auth/api/v1", merchantAuthRouter);
 // shared-routers
 app.use("/resend-otp/api/v1", resendOtpRouter);
 
-
 // check whether requested url exist on this server or not
-app.all("*", (req, res, next) => {
+app.use((req, res, next) => {
   next(new AppError(404, `Can't find ${req.originalUrl} on this server!`));
 });
 
