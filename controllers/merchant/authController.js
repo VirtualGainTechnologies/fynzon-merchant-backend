@@ -23,4 +23,4 @@ exports.sendRegistrationOtp = async (req, res) => {
   });
 };
 
-exports.verifyRegistrationOtp = () => {};
+exports.verifyRegistrationOtp = (req, session) => {};

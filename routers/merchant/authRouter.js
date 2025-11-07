@@ -5,7 +5,7 @@ const {
   sendRegistrationOtp,
   verifyRegistrationOtp,
 } = require("../../controllers/merchant/authController");
-const { catchAsync } = require("../../utils/catchAsync");
+const { catchAsync, catchAsyncWithSession } = require("../../utils/catchAsync");
 const {
   getIpAndLocation,
 } = require("../../middlewares/shared/ipLocationMiddleware");
@@ -84,7 +84,7 @@ router.post(
   "/registration/verify-otp",
   verifyRegistrationOtpValidator,
   catchAsync("getIpAndLocation middleware", getIpAndLocation),
-  catchAsync("verifyRegistrationOtp api", verifyRegistrationOtp)
+  catchAsyncWithSession("verifyRegistrationOtp api", verifyRegistrationOtp)
 );
 
 module.exports = router;

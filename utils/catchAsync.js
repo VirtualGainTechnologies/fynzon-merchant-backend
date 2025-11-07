@@ -27,61 +27,62 @@ exports.catchAsync = (fnName, fn) => {
   };
 };
 
-exports.catchAsyncWithSession = async (fnName, fn) => {
-  await retry(
-    async (bail, attempt) => {
-      const session = await mongoose.startSession();
-      session.startTransaction();
-      try {
-        const { errors } = validationResult(req);
-        if (errors.length > 0) {
-          throw new AppError(400, errors[0].msg || "Bad request");
-        }
+exports.catchAsyncWithSession = (fnName, fn) => {
+  return async (req, res, next) => {
+    await retry(
+      async (bail, attempt) => {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        try {
+          const { errors } = validationResult(req);
+          if (errors.length > 0) {
+            throw new AppError(400, errors[0].msg || "Bad request");
+          }
 
-        let result = await fn(req, session);
+          let result = await fn(req, res, session);
 
-        if (result?.data?.jwtToken) {
-          res.cookie(
-            result?.data?.jwtToken?.tokenName,
-            result?.data?.jwtToken?.token,
-            {
-              httpOnly: false,
-              secure: "auto",
-              maxAge: process.env.COOKIE_EXPIRATION_MILLISECONDS * 1,
-              signed: true,
-              sameSite: "strict",
-            }
+          if (result?.data?.jwtToken) {
+            res.cookie(
+              result.data.jwtToken.tokenName,
+              result.data.jwtToken.token,
+              {
+                httpOnly: false,
+                secure: "auto",
+                maxAge: process.env.COOKIE_EXPIRATION_MILLISECONDS * 1,
+                signed: true,
+                sameSite: "strict",
+              }
+            );
+            delete result.data.jwtToken;
+          }
+
+          await commitWithRetry(session);
+          res.status(200).json(result);
+        } catch (err) {
+          logger.error(
+            `Error in catch block of ${fnName} ===> ${JSON.stringify(err)}`
           );
-          delete result.data?.jwtToken;
-        }
+          if (session.inTransaction()) await session.abortTransaction();
 
-        await commitWithRetry(session);
-        res.status(200).json(result);
-      } catch (err) {
-        logger.error(
-          `Error in catch block of ${fnName} ===> ${JSON.stringify(err)}`
-        );
-        if (session.inTransaction()) {
-          await session.abortTransaction();
+          if (this.isTransientError(err)) {
+            console.log(`Attempt ${attempt} failed → retrying...`);
+            throw err;
+          } else {
+            bail(err);
+          }
+        } finally {
+          session.endSession();
         }
-        if (this.isTransientError(err)) {
-          console.log(`Attempt ${attempt} failed → retrying...`);
-          throw err;
-        } else {
-          bail(err);
-        }
-      } finally {
-        session.endSession();
+      },
+      {
+        retries: 5,
+        factor: 2,
+        minTimeout: 100,
+        maxTimeout: 2000,
+        randomize: true,
       }
-    },
-    {
-      retries: 5,
-      factor: 2,
-      minTimeout: 100,
-      maxTimeout: 2000,
-      randomize: true,
-    }
-  );
+    ).catch(next); // <- Pass final error to Express
+  };
 };
 
 const errorHandler = (err) => {
