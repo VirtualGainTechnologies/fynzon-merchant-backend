@@ -1,55 +1,52 @@
-const {
-  UserApiSettingModel,
-} = require("../../models/user/userApiSettingModel");
-const { UserKycModel } = require("../../models/user/userKycModel");
-const { UserModel } = require("../../models/user/userModel");
-const { UserWalletModel } = require("../../models/user/userWalletModel");
+const { MerchantKycModel } = require("../../models/merchant/kycModel");
+const { MerchantModel } = require("../../models/merchant/merchantModel");
+const { MerchantWalletModel } = require("../../models/merchant/walletModel");
 const AppError = require("../../utils/AppError");
 const {
   pvtltdToPrivateLimitedConverter,
 } = require("../../utils/pvtltdToPrivateLimitedConverter");
 
-exports.createUser = (object) => {
-  return UserModel.create(object);
+exports.createMerchant = (object) => {
+  return MerchantModel.create(object);
 };
 
-exports.getUserById = (id, projections = null, options = {}) => {
-  return UserModel.findById(id, projections, options);
+exports.getMerchantById = (id, projections = null, options = {}) => {
+  return MerchantModel.findById(id, projections, options);
 };
 
-exports.getUserByFilter = (filters = {}, projections = null, options = {}) => {
-  return UserModel.findOne(filters, projections, options);
+exports.getMerchantByFilter = (filters = {}, projections = null, options = {}) => {
+  return MerchantModel.findOne(filters, projections, options);
 };
 
-exports.getAllUserByFilter = (
+exports.getAllMerchantByFilter = (
   filters = {},
   projections = null,
   options = {}
 ) => {
-  return UserModel.find(filters, projections, options);
+  return MerchantModel.find(filters, projections, options);
 };
 
-exports.updateUserById = (id, updateObject, options = {}) => {
-  return UserModel.findByIdAndUpdate(id, updateObject, options);
+exports.updateMerchantById = (id, updateObject, options = {}) => {
+  return MerchantModel.findByIdAndUpdate(id, updateObject, options);
 };
 
-exports.updateUserByFilter = (
+exports.updateMerchantByFilter = (
   filters = {},
   updateObject = {},
   options = {}
 ) => {
-  return UserModel.findOneAndUpdate(filters, updateObject, options);
+  return MerchantModel.findOneAndUpdate(filters, updateObject, options);
 };
 
-exports.updateAllUserByFilter = (
+exports.updateAllMerchantByFilter = (
   filters = {},
   updateObject = {},
   options = {}
 ) => {
-  return UserModel.updateMany(filters, updateObject, options);
+  return MerchantModel.updateMany(filters, updateObject, options);
 };
 
-exports.registerUser = async (req_body, session) => {
+exports.registerMerchant = async (req_body, session) => {
   try {
     //chekc merchant
     let filter = {
@@ -69,7 +66,7 @@ exports.registerUser = async (req_body, session) => {
       filter.$or.push({ business_name: req_body.businessName });
     }
 
-    const userDetails = await this.getUserByFilter(
+    const merchantDetails = await this.getMerchantByFilter(
       filter,
       "_id email phone business_name",
       {
@@ -77,13 +74,13 @@ exports.registerUser = async (req_body, session) => {
       }
     );
 
-    if (userDetails) {
+    if (merchantDetails) {
       const message =
-        userDetails.email === req_body.email
+        merchantDetails.email === req_body.email
           ? "Email is alreday registered"
-          : userDetails.phone === req_body.phone
+          : merchantDetails.phone === req_body.phone
           ? "Phone is alreday registered"
-          : userDetails.business_name === req_body.businessName
+          : merchantDetails.business_name === req_body.businessName
           ? "Business name is already taken"
           : "Already registered";
 
@@ -91,7 +88,7 @@ exports.registerUser = async (req_body, session) => {
     }
 
     // create user instance
-    let userInstance = new UserModel({
+    let merchantInstance = new MerchantModel({
       merchant_type: req_body.category,
       full_name: req_body.fullName || "",
       profession: req_body.profession || "",
@@ -109,43 +106,31 @@ exports.registerUser = async (req_body, session) => {
     });
 
     //generate JWT token
-    userInstance.generateAuthToken();
+    merchantInstance.generateAuthToken();
 
     // create kyc instance
-    const kycInstance = new UserKycModel({
-      user_id: userInstance._id,
-      email: userInstance.email,
-      user_type: userInstance.merchant_type,
-    });
-
-    // create user developer instance
-    const userApiSettingInstance = new UserApiSettingModel({
-      user_id: userInstance._id,
-      email: userInstance.email,
+    const kycInstance = new MerchantKycModel({
+      merchant_id: merchantInstance._id,
+      email: merchantInstance.email,
+      merchant_type: merchantInstance.merchant_type,
     });
 
     // create wallet instance
-    const walletInstance = new UserWalletModel({
-      user_id: userInstance._id,
-      email: userInstance.email,
+    const walletInstance = new MerchantWalletModel({
+      merchant_id: merchantInstance._id,
+      email: merchantInstance.email,
     });
 
     //update user instance
-    userInstance.user_kyc_id = kycInstance._id;
-    userInstance.user_wallet_id = walletInstance._id;
-    userInstance.user_api_setting_id = userApiSettingInstance._id;
+    merchantInstance.kyc_id = kycInstance._id;
+    merchantInstance.wallet_id = walletInstance._id;
 
     // save all documents
-    const userRes = await userInstance.save({ session });
+    const merchantRes = await merchantInstance.save({ session });
     const kycRes = await kycInstance.save({ session });
     const walletRes = await walletInstance.save({ session });
-    const apiSettingInstance = await userApiSettingInstance.save({ session });
 
-    if (!apiSettingInstance) {
-      throw new AppError(400, "Error in creating user developer");
-    }
-
-    if (!userRes) {
+    if (!merchantRes) {
       throw new AppError(400, "Error in creating merchant");
     }
 
@@ -160,7 +145,7 @@ exports.registerUser = async (req_body, session) => {
     return {
       message: "Registration successfull",
       error: false,
-      data: userRes,
+      data: merchantRes,
     };
   } catch (err) {
     return {

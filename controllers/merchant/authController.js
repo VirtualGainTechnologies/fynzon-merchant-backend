@@ -1,5 +1,8 @@
 const { sendOtpToEmail } = require("../../utils/sendOtp");
 const AppError = require("../../utils/AppError");
+const { verifyOtp } = require("../../utils/verifyOtp");
+const { registerMerchant } = require("../../services/merchant/authService");
+const { sendEmail } = require("../../utils/emailDispatcher");
 
 exports.sendRegistrationOtp = async (req, res) => {
   const emailObject = {
@@ -26,8 +29,9 @@ exports.sendRegistrationOtp = async (req, res) => {
 };
 
 exports.verifyRegistrationOtp = async (req, session) => {
-  const req_body = {...req.body};
-    const verifiedOtp = await verifyOtp(req_body.otpId, req_body.otp);
+  const req_body = { ...req.body };
+
+  const verifiedOtp = await verifyOtp(req_body.otpId, req_body.otp);
   if (verifiedOtp.error) {
     throw new AppError(400, verifiedOtp.message || "Invalid or expired OTP");
   }
@@ -37,14 +41,14 @@ exports.verifyRegistrationOtp = async (req, session) => {
     locationDetails: req.locationDetails,
   };
 
-  const registerDetails = await registerUser(payload, session);
+  const registerDetails = await registerMerchant(payload, session);
   if (registerDetails.error) {
     throw new AppError(400, registerDetails.message);
   }
 
   const registerData = registerDetails.data;
 
-    const response = {
+  const response = {
     merchantType: registerData.merchant_type,
     businessName: registerData.business_name,
     businessCategory: registerData.business_category,
@@ -76,7 +80,7 @@ exports.verifyRegistrationOtp = async (req, session) => {
   if (isEmailSent.error) {
     throw new AppError(400, isEmailSent.message);
   }
-    return {
+  return {
     message: registerData.message || "Registration successful",
     error: false,
     data: response,

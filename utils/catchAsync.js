@@ -64,7 +64,7 @@ exports.catchAsyncWithSession = (fnName, fn) => {
           );
           if (session.inTransaction()) await session.abortTransaction();
 
-          if (this.isTransientError(err)) {
+          if (isTransientError(err)) {
             console.log(`Attempt ${attempt} failed → retrying...`);
             throw err;
           } else {
