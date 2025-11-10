@@ -9,8 +9,8 @@ const {
   deleteFile,
 } = require("../../utils/imageUpload");
 const {
-  getKycByFilter,
-  updateKycByFilter,
+  getMerchantKycByFilter,
+  updateMerchantKycByFilter,
 } = require("../../services/merchant/kycService");
 const { checkExpiry } = require("../../utils/dateHelper");
 const { getNthLastCharactersInArray } = require("../../utils/stringHelper");
@@ -48,7 +48,7 @@ exports.verifyAadhaar = async (req, res, next) => {
         throw new AppError(400, "Merchant must be of individual type");
       }
 
-      const kycData = await getKycByFilter(
+      const kycData = await getMerchantKycByFilter(
         {
           merchant_id: req.merchantId,
         },
@@ -241,7 +241,7 @@ exports.verifyAadhaar = async (req, res, next) => {
             : "PENDING",
       };
 
-      const updatedKyc = await updateKycByFilter(
+      const updatedKyc = await updateMerchantKycByFilter(
         { merchant_id: req.merchantId },
         updateObj,
         { new: true }
@@ -313,9 +313,9 @@ exports.verifyGstin = async (req, res, next) => {
         throw new AppError(400, "Merchant must be of entity type");
       }
 
-      //check gstin already exists or not
-      const kycData = await getUserKycByFilter(
-        { user_id: req.userId },
+      // check gstin already exists or not
+      const kycData = await getMerchantKycByFilter(
+        { merchant_id: req.merchantId },
         {
           "gstin.gstin_number": 1,
           "pan.is_pan_verified": 1,
@@ -332,7 +332,7 @@ exports.verifyGstin = async (req, res, next) => {
         throw new AppError(400, "This GSTIN number already exists");
       }
 
-      //get gstin details
+      // get gstin details
       const gstData = await axios.request({
         url: `${process.env.SIGNZY_MAIN_URL}/api/v3/gst/search`,
         method: "post",
@@ -366,7 +366,7 @@ exports.verifyGstin = async (req, res, next) => {
         );
       }
 
-      //update gstin
+      // update gstin
       const updateObj = {
         "gstin.gstin_number":
           gstData.data?.result?.gstin ||
@@ -420,8 +420,8 @@ exports.verifyGstin = async (req, res, next) => {
             : "PENDING",
       };
 
-      const updatedKyc = await updateUserKycByFilter(
-        { user_id: req.userId },
+      const updatedKyc = await updateMerchantKycByFilter(
+        { merchant_id: req.merchantId },
         updateObj,
         { new: true }
       );
@@ -454,8 +454,9 @@ exports.verifyGstin = async (req, res, next) => {
       });
     }
   } catch (err) {
-    console.log("Error in catch block of verifyGstin", err);
-
+    logger.error(
+      `Error in catch block of verifyGstin == > ${JSON.stringify(err)}`
+    );
     if (err.response?.data || err.response?.data?.error) {
       next(
         new AppError(
@@ -489,9 +490,9 @@ exports.verifyIndividualPan = async (req, res, next) => {
         throw new AppError(400, "Merchant must be of individual type");
       }
 
-      const kycData = await getUserKycByFilter(
+      const kycData = await getMerchantKycByFilter(
         {
-          user_id: req.userId,
+          merchant_id: req.merchantId,
         },
         {
           "pan.pan_number": 1,
@@ -520,7 +521,7 @@ exports.verifyIndividualPan = async (req, res, next) => {
 
       fileKey = imageData.data?.split("/")[3];
 
-      //check image quality
+      // check image quality
       const panImageQuality = await axios.request({
         url: `${process.env.SIGNZY_MAIN_URL}/api/v3/vision/assess-image-quality`,
         method: "post",
@@ -543,7 +544,7 @@ exports.verifyIndividualPan = async (req, res, next) => {
       }
 
       const [panVerifiedData, panExtractedData] = await Promise.all([
-        //verify-pan
+        // verify-pan
         axios.request({
           url: `${process.env.SIGNZY_MAIN_URL}/api/v3/pan/fetchV2`,
           method: "post",
@@ -557,7 +558,7 @@ exports.verifyIndividualPan = async (req, res, next) => {
           }),
         }),
 
-        //pan card data-extraction
+        // pan card data-extraction
         axios.request({
           url: `${process.env.SIGNZY_MAIN_URL}/api/v3/pan/extractions`,
           method: "post",
@@ -573,7 +574,7 @@ exports.verifyIndividualPan = async (req, res, next) => {
         }),
       ]);
 
-      //check aadhaar and pan belongs to same person or not
+      // check aadhaar and pan belongs to same person or not
       if (
         panExtractedData.data?.result?.name?.toUpperCase() !=
         kycData.aadhaar?.name?.toUpperCase()
@@ -584,7 +585,7 @@ exports.verifyIndividualPan = async (req, res, next) => {
         );
       }
 
-      //check pan validity
+      // check pan validity
       if (
         !panVerifiedData.data?.result?.isValid ||
         panVerifiedData.data?.result?.panStatusCode != "E"
@@ -595,12 +596,12 @@ exports.verifyIndividualPan = async (req, res, next) => {
         throw new AppError(400, message || "Invalid PAN");
       }
 
-      //check pan belongs to individual or not
+      // check pan belongs to individual or not
       if (panVerifiedData.data?.result?.typeOfHolder === "Company") {
         throw new AppError(400, "PAN card must be of individual or person");
       }
 
-      //Check pan and aadhar linked or not
+      // check pan and aadhar linked or not
       if (panVerifiedData.data?.result?.aadhaarSeedingStatusCode != "Y") {
         const message = getAadharPanLinkStatus(
           panVerifiedData.data?.result?.aadhaarSeedingStatusCode
@@ -608,7 +609,7 @@ exports.verifyIndividualPan = async (req, res, next) => {
         throw new AppError(400, message || "PAN and Aadhaar is not linked");
       }
 
-      //check PAN image is valid or not
+      // check PAN image is valid or not
       if (
         !panExtractedData.data?.result?.number ||
         panExtractedData.data?.result?.number === ""
@@ -616,7 +617,7 @@ exports.verifyIndividualPan = async (req, res, next) => {
         throw new AppError(400, "Invalid PAN image");
       }
 
-      //check expiryDate
+      // check expiryDate
       if (panExtractedData.data?.result?.summary?.expiryDate) {
         const expiryData = checkExpiry(
           panExtractedData.data?.result?.summary?.expiryDate
@@ -627,7 +628,7 @@ exports.verifyIndividualPan = async (req, res, next) => {
         }
       }
 
-      //chekc pan number entered match with pan number on image or not
+      // check pan number entered match with pan number on image or not
       if (
         panVerifiedData.data?.result?.number !=
         panExtractedData.data?.result?.number
@@ -638,7 +639,7 @@ exports.verifyIndividualPan = async (req, res, next) => {
         );
       }
 
-      //update pan
+      // update pan
       let updateObj = {
         "pan.type_of_holder": panVerifiedData.data?.result?.typeOfHolder || "",
         "pan.pan_image": panExtractedData.data?.files[0] || "",
@@ -680,9 +681,9 @@ exports.verifyIndividualPan = async (req, res, next) => {
             : "PENDING",
       };
 
-      const updatedKyc = await updateUserKycByFilter(
+      const updatedKyc = await updateMerchantKycByFilter(
         {
-          user_id: req.userId,
+          merchant_id: req.merchantId,
         },
         updateObj,
         { new: true }
@@ -692,7 +693,7 @@ exports.verifyIndividualPan = async (req, res, next) => {
         throw new AppError(400, "Error in updating pan details");
       }
 
-      //delete the prevoius passport image from bucket
+      // delete the prevoius passport image from bucket
       if (kycData.pan?.pan_image) {
         const key = kycData?.pan?.pan_image.split("/")[3];
         await deleteFile(key);
@@ -722,8 +723,10 @@ exports.verifyIndividualPan = async (req, res, next) => {
       });
     }
   } catch (err) {
-    console.log("Error in catch block of verifyIndividualPan", err);
-    //delete the prevoius pan image from bucket
+    logger.error(
+      `Error in catch block of verifyIndividualPan == > ${JSON.stringify(err)}`
+    );
+    // delete the prevoius pan image from bucket
     if (fileKey) {
       await deleteFile(fileKey);
     }
@@ -743,7 +746,7 @@ exports.verifyIndividualPan = async (req, res, next) => {
   }
 };
 
-// verify  business pan card
+// verify business pan card
 exports.verifyBusinessPan = async (req, res, next) => {
   let fileKey = "";
   try {
@@ -761,9 +764,9 @@ exports.verifyBusinessPan = async (req, res, next) => {
         throw new AppError(400, "Merchant must be of entity type");
       }
 
-      const kycData = await getUserKycByFilter(
+      const kycData = await getMerchantKycByFilter(
         {
-          user_id: req.userId,
+          merchant_id: req.merchantId,
         },
         {
           "pan.pan_number": 1,
@@ -793,7 +796,7 @@ exports.verifyBusinessPan = async (req, res, next) => {
 
       fileKey = imageData.data?.split("/")[3];
 
-      //check image quality
+      // check image quality
       const panImageQuality = await axios.request({
         url: `${process.env.SIGNZY_MAIN_URL}/api/v3/vision/assess-image-quality`,
         method: "post",
@@ -817,7 +820,7 @@ exports.verifyBusinessPan = async (req, res, next) => {
 
       const [panVerifiedData, panGstLinkData, panExtractedData] =
         await Promise.all([
-          //verify-pan
+          // verify-pan
           axios.request({
             url: `${process.env.SIGNZY_MAIN_URL}/api/v3/pan/fetchV2`,
             method: "post",
@@ -830,7 +833,7 @@ exports.verifyBusinessPan = async (req, res, next) => {
               returnIndividualTaxComplianceInfo: "true",
             }),
           }),
-          //verify-pan-gst-linked or not
+          // verify-pan-gst-linked or not
           axios.request({
             url: `${process.env.SIGNZY_MAIN_URL}/api/v3/gst/panToGstnDetail`,
             method: "post",
@@ -842,7 +845,7 @@ exports.verifyBusinessPan = async (req, res, next) => {
               panNumber: req_body?.panNumber,
             }),
           }),
-          //pan card data-extraction
+          // pan card data-extraction
           axios.request({
             url: `${process.env.SIGNZY_MAIN_URL}/api/v3/pan/extractions`,
             method: "post",
@@ -858,7 +861,7 @@ exports.verifyBusinessPan = async (req, res, next) => {
           }),
         ]);
 
-      //check pan validity
+      // check pan validity
       if (
         !panVerifiedData.data?.result?.isValid ||
         panVerifiedData.data?.result?.panStatusCode != "E"
@@ -869,12 +872,12 @@ exports.verifyBusinessPan = async (req, res, next) => {
         throw new AppError(400, message || "Invalid PAN");
       }
 
-      //check pan belongs to individual or not
+      // check pan belongs to individual or not
       if (panVerifiedData.data?.result?.typeOfHolder !== "Company") {
         throw new AppError(400, "PAN card must be of company or entity");
       }
 
-      //check PAN image is valid or not
+      // check PAN image is valid or not
       if (
         !panExtractedData.data?.result?.number ||
         panExtractedData.data?.result?.number === ""
@@ -882,7 +885,7 @@ exports.verifyBusinessPan = async (req, res, next) => {
         throw new AppError(400, "Invalid PAN image");
       }
 
-      //check expiryDate
+      // check expiryDate
       if (panExtractedData.data?.result?.summary?.expiryDate) {
         const expiryData = checkExpiry(
           panExtractedData.data?.result?.summary?.expiryDate
@@ -893,7 +896,7 @@ exports.verifyBusinessPan = async (req, res, next) => {
         }
       }
 
-      //chekc pan number entered match with pan number on image or not
+      // check pan number entered match with pan number on image or not
       if (
         panVerifiedData.data?.result?.number !=
         panExtractedData.data?.result?.number
@@ -908,7 +911,7 @@ exports.verifyBusinessPan = async (req, res, next) => {
         throw new AppError(400, "PAN and GSTIN is not linked");
       }
 
-      //check pan and gstin belongs to same person or not
+      // check pan and gstin belongs to same person or not
       if (
         panExtractedData.data?.result?.name?.toUpperCase() !=
         (kycData.gstin?.legal_name_of_business?.toUpperCase() ||
@@ -920,7 +923,7 @@ exports.verifyBusinessPan = async (req, res, next) => {
         );
       }
 
-      //update pan
+      // update pan
       let updateObj = {
         "pan.type_of_holder": panVerifiedData.data?.result?.typeOfHolder || "",
         "pan.pan_image": panExtractedData.data?.files[0] || "",
@@ -960,9 +963,9 @@ exports.verifyBusinessPan = async (req, res, next) => {
             : "PENDING",
       };
 
-      const updatedKyc = await updateUserKycByFilter(
+      const updatedKyc = await updateMerchantKycByFilter(
         {
-          user_id: req.userId,
+          merchant_id: req.merchantId,
         },
         updateObj,
         { new: true }
@@ -972,7 +975,7 @@ exports.verifyBusinessPan = async (req, res, next) => {
         throw new AppError(400, "Error in updating pan details");
       }
 
-      //delete the prevoius passport image from bucket
+      // delete the prevoius passport image from bucket
       if (kycData.pan?.pan_image) {
         const key = kycData?.pan?.pan_image.split("/")[3];
         await deleteFile(key);
@@ -992,7 +995,7 @@ exports.verifyBusinessPan = async (req, res, next) => {
           dateOfBirth: updatedKyc.pan?.birth_date
             ? updatedKyc.pan?.birth_date
             : "N/A",
-          registeredAddress: updatedKyc.pan?.address?.addres_line
+          registeredAddress: updatedKyc.pan?.address?.address_line
             ? `${updatedKyc.pan?.address?.address_line} ${updatedKyc.pan?.address?.city} ${updatedKyc.pan?.address?.district} ${updatedKyc.pan?.address?.state} ${updatedKyc.pan?.address?.country} pin-${updatedKyc.pan?.address?.pin_code}`
             : "N/A",
           panImage: updatedKyc.pan?.pan_image?.split("/")[3] || "N/A",
@@ -1002,8 +1005,10 @@ exports.verifyBusinessPan = async (req, res, next) => {
       });
     }
   } catch (err) {
-    console.log("Error in catch block of verifyIndividualPan", err);
-    //delete the prevoius pan image from bucket
+    logger.error(
+      `Error in catch block of verifyBusinessPan == > ${JSON.stringify(err)}`
+    );
+    // delete the prevoius pan image from bucket
     if (fileKey) {
       await deleteFile(fileKey);
     }
@@ -1023,7 +1028,7 @@ exports.verifyBusinessPan = async (req, res, next) => {
   }
 };
 
-//verify bank account
+// verify bank account
 exports.verifyBank = async (req, res, next) => {
   let fileKey = "";
   try {
@@ -1037,9 +1042,9 @@ exports.verifyBank = async (req, res, next) => {
         throw new AppError(400, "Cancelled cheque image is missing");
       }
 
-      const kycData = await getUserKycByFilter(
+      const kycData = await getMerchantKycByFilter(
         {
-          user_id: req.userId,
+          merchant_id: req.merchantId,
         },
         {
           "bank.account_number": 1,
@@ -1100,7 +1105,7 @@ exports.verifyBank = async (req, res, next) => {
 
       fileKey = imageData.data?.split("/")[3];
 
-      //check image quality
+      // check image quality
       const chequeImageQuality = await axios.request({
         url: `${process.env.SIGNZY_MAIN_URL}/api/v3/vision/assess-image-quality`,
         method: "post",
@@ -1123,7 +1128,7 @@ exports.verifyBank = async (req, res, next) => {
       }
 
       const [accountData, chequeExtractedData] = await Promise.all([
-        //account transfer
+        // account verfication
         axios.request({
           url: `${process.env.SIGNZY_MAIN_URL}/api/v3/bankaccountverification/bankaccountverifications`,
           method: "post",
@@ -1138,7 +1143,7 @@ exports.verifyBank = async (req, res, next) => {
           }),
         }),
 
-        //data-extraction
+        // data extraction
         axios.request({
           url: `${process.env.SIGNZY_MAIN_URL}/api/v3/cheque/extractions`,
           method: "post",
@@ -1153,7 +1158,7 @@ exports.verifyBank = async (req, res, next) => {
         }),
       ]);
 
-      //check bank and aadhaar belongs to same person or not
+      // check bank and aadhaar belongs to same person or not
       if (
         kycData.aadhaar?.name &&
         chequeExtractedData.data?.result?.name?.toUpperCase() !=
@@ -1165,23 +1170,11 @@ exports.verifyBank = async (req, res, next) => {
         );
       }
 
-      console.log(
-        "chequeExtractedData.data?.result",
-        chequeExtractedData.data?.result
-      );
-
       const name = pvtltdToPrivateLimitedConverter(
         chequeExtractedData.data?.result?.name
       );
 
-      console.log(" name", name);
-      console.log(
-        "kycData.gstin?.legal_name_of_business",
-        kycData.gstin?.legal_name_of_business,
-        kycData.gstin?.trade_name_of_business
-      );
-
-      //check bank and gstin belongs to same person or not
+      // check bank and gstin belongs to same person or not
       if (
         (kycData.gstin?.legal_name_of_business ||
           kycData.gstin?.trade_name_of_business) &&
@@ -1230,7 +1223,7 @@ exports.verifyBank = async (req, res, next) => {
         );
       }
 
-      //update bank detials
+      // update bank detials
       let updateObj = {
         "bank.bank_name": chequeExtractedData.data?.result?.bankName || "",
         "bank.branch": chequeExtractedData.data?.result?.branch || "",
@@ -1277,7 +1270,7 @@ exports.verifyBank = async (req, res, next) => {
             : "PENDING",
       };
 
-      const updatedKyc = await updateUserKycByFilter(
+      const updatedKyc = await updateMerchantKycByFilter(
         { user_id: req.userId },
         updateObj,
         { new: true }
@@ -1287,7 +1280,7 @@ exports.verifyBank = async (req, res, next) => {
         throw new AppError(400, "Error in updating bank details");
       }
 
-      //delete the prevoius cheque image from bucket
+      // delete the prevoius cheque image from bucket
       if (kycData.bank?.cancelled_cheque_image) {
         const key = kycData.bank?.cancelled_cheque_image.split("/")[3];
         await deleteFile(key);
@@ -1336,8 +1329,10 @@ exports.verifyBank = async (req, res, next) => {
       });
     }
   } catch (err) {
-    console.log("Error in catch block of verifyBank", err);
-    //delete the prevoius pan image from bucket
+    logger.error(
+      `Error in catch block of verifyBank == > ${JSON.stringify(err)}`
+    );
+    // delete the prevoius pan image from bucket
     if (fileKey) {
       await deleteFile(fileKey);
     }
@@ -1373,9 +1368,9 @@ exports.verifySelfie = async (req, res, next) => {
         throw new AppError(400, "Merchant must be of individual type");
       }
 
-      const kycData = await getUserKycByFilter(
+      const kycData = await getMerchantKycByFilter(
         {
-          user_id: req.userId,
+          merchant_id: req.merchantId,
         },
         {
           "selfie?.selfie_image": 1,
@@ -1407,7 +1402,7 @@ exports.verifySelfie = async (req, res, next) => {
 
       fileKey = imageData.data?.split("/")[3];
 
-      //check image quality
+      // check image quality
       const selfieImageQuality = await axios.request({
         url: `${process.env.SIGNZY_MAIN_URL}/api/v3/vision/assess-image-quality`,
         method: "post",
@@ -1432,7 +1427,7 @@ exports.verifySelfie = async (req, res, next) => {
         );
       }
 
-      //aadhaar card face-extarction
+      // aadhaar card face-extarction
       const faceExtractedData = await axios.request({
         url: `${process.env.SIGNZY_MAIN_URL}/api/v3/face/get-face`,
         method: "post",
@@ -1446,7 +1441,7 @@ exports.verifySelfie = async (req, res, next) => {
         }),
       });
 
-      //face-match
+      // face-match
       const faceMatchData = await axios.request({
         url: `${process.env.SIGNZY_MAIN_URL}/api/v3/face/match`,
         method: "post",
@@ -1463,8 +1458,6 @@ exports.verifySelfie = async (req, res, next) => {
         }),
       });
 
-      console.log("faceMatchData?.data?.result?", faceMatchData?.data?.result);
-
       if (faceMatchData?.data?.result?.maskDetections[0]?.maskDetected) {
         throw new AppError(400, "Mask detected on face");
       }
@@ -1476,7 +1469,7 @@ exports.verifySelfie = async (req, res, next) => {
         );
       }
 
-      //update selfie
+      // update selfie
       let updateObj = {
         "selfie.selfie_image": imageData.data || "",
         "selfie.status": "VERIFIED",
@@ -1489,8 +1482,8 @@ exports.verifySelfie = async (req, res, next) => {
             : "PENDING",
       };
 
-      const updatedKyc = await updateUserKycByFilter(
-        { user_id: req.userId },
+      const updatedKyc = await updateMerchantKycByFilter(
+        { merchant_id: req.merchantId },
         updateObj,
         { new: true }
       );
@@ -1499,7 +1492,7 @@ exports.verifySelfie = async (req, res, next) => {
         throw new AppError(400, "Error in updating selfie details");
       }
 
-      //delete the prevoius selfie image from bucket
+      // delete the prevoius selfie image from bucket
       if (kycData.selfie?.selfie_image) {
         const key = kycData.selfie?.selfie_image.split("/")[3];
         await deleteFile(key);
@@ -1533,8 +1526,10 @@ exports.verifySelfie = async (req, res, next) => {
       });
     }
   } catch (err) {
-    console.log("Error in catch block of verifyBank", err);
-    //delete the prevoius pan image from bucket
+    logger.error(
+      `Error in catch block of verifySelfie == > ${JSON.stringify(err)}`
+    );
+    // delete the prevoius pan image from bucket
     if (fileKey) {
       await deleteFile(fileKey);
     }

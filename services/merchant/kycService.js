@@ -1,14 +1,14 @@
 const { MerchantKycModel } = require("../../models/merchant/kycModel");
 
-exports.createKyc = (object) => {
+exports.createMerchantKyc = (object) => {
   return MerchantKycModel.create(object);
 };
 
-exports.getKycById = (id, projections = null, options = {}) => {
+exports.getMerchantKycById = (id, projections = null, options = {}) => {
   return MerchantKycModel.findById(id, projections, options);
 };
 
-exports.getKycByFilter = (
+exports.getMerchantKycByFilter = (
   filters = {},
   projections = null,
   options = {}
@@ -16,7 +16,7 @@ exports.getKycByFilter = (
   return MerchantKycModel.findOne(filters, projections, options);
 };
 
-exports.getAllKycByFilter = (
+exports.getAllMerchantKycByFilter = (
   filters = {},
   projections = null,
   options = {}
@@ -24,11 +24,11 @@ exports.getAllKycByFilter = (
   return MerchantKycModel.find(filters, projections, options);
 };
 
-exports.updateKycById = (id, updateObject, options = {}) => {
+exports.updateMerchantKycById = (id, updateObject, options = {}) => {
   return MerchantKycModel.findByIdAndUpdate(id, updateObject, options);
 };
 
-exports.updateKycByFilter = (
+exports.updateMerchantKycByFilter = (
   filters = {},
   updateObject = {},
   options = {}
@@ -36,7 +36,7 @@ exports.updateKycByFilter = (
   return MerchantKycModel.findOneAndUpdate(filters, updateObject, options);
 };
 
-exports.updateAllKycByFilter = (
+exports.updateAllMerchantKycByFilter = (
   filters = {},
   updateObject = {},
   options = {}

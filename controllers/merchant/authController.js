@@ -58,7 +58,7 @@ exports.verifyRegistrationOtp = async (req, session) => {
     phoneCode: registerData.phone_code,
     phone: registerData.phone,
     jwtToken: {
-      tokenName: "user_token",
+      tokenName: "merchant_token",
       token: registerData.token,
     },
     kycStatus: "PENDING",

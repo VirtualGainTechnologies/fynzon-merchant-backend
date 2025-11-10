@@ -1,5 +1,5 @@
 const { getMerchantByFilter } = require("../../services/merchant/authService");
-const { getKycByFilter } = require("../../services/merchant/kycService");
+const { getMerchantKycByFilter } = require("../../services/merchant/kycService");
 const AppError = require("../../utils/AppError");
 const { verifyJwtToken } = require("../../utils/verifyJwtToken");
 
@@ -38,7 +38,7 @@ exports.verifyMerchantToken = async (req, res, next) => {
     throw new AppError(400, "Temporarly blocked, reset password to login");
   }
 
-  const kycData = await getKycByFilter(
+  const kycData = await getMerchantKycByFilter(
     { merchant_id: merchant._id },
     "_id kyc_status",
     {
