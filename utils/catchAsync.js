@@ -39,7 +39,7 @@ exports.catchAsyncWithSession = (fnName, fn) => {
             throw new AppError(400, errors[0].msg || "Bad request");
           }
 
-          let result = await fn(req, res, session);
+          let result = await fn(req, session);
 
           if (result?.data?.jwtToken) {
             res.cookie(
