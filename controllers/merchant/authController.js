@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const moment=require("moment")
 
 const { sendOtpToEmail } = require("../../utils/sendOtp");
 const AppError = require("../../utils/AppError");
@@ -164,7 +165,7 @@ exports.verifyLoginOtp = async (req, res) => {
       incorrect_login_count: 0,
       last_failed_login_at: null,
     },
-    { new: true, session }
+    { new: true }
   );
 
   if (!updatedMerchant) {
