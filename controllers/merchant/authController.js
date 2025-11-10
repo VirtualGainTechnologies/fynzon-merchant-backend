@@ -183,33 +183,33 @@ exports.verifyLoginOtp = async (req, res) => {
   }
 
   const response = {
-    merchantType: updatedUser.merchant_type,
-    businessName: updatedUser.business_name,
-    businessCategory: updatedUser.business_category,
-    fullName: updatedUser.full_name,
-    profession: updatedUser.profession,
-    email: updatedUser.email,
-    phoneCode: updatedUser.phone_code,
-    phone: updatedUser.phone,
+    merchantType: updatedMerchant.merchant_type,
+    businessName: updatedMerchant.business_name,
+    businessCategory: updatedMerchant.business_category,
+    fullName: updatedMerchant.full_name,
+    profession: updatedMerchant.profession,
+    email: updatedMerchant.email,
+    phoneCode: updatedMerchant.phone_code,
+    phone: updatedMerchant.phone,
     jwtToken: {
       tokenName: "merchant_token",
-      token: updatedUser.token,
+      token: updatedMerchant.token,
     },
     kycStatus: kycData?.kyc_status,
-    onboardingMode: updatedUser.onboarding_mode,
-    liveOnboardingEnabled: updatedUser.live_onboarding_enabled,
+    onboardingMode: updatedMerchant.onboarding_mode,
+    liveOnboardingEnabled: updatedMerchant.live_onboarding_enabled,
   };
 
   // send login email
   const emailObject = {
     userName:
-      updatedUser.merchant_type === "ENTITY"
-        ? updatedUser.business_name
-        : updatedUser.full_name,
+      updatedMerchant.merchant_type === "ENTITY"
+        ? updatedMerchant.business_name
+        : updatedMerchant.full_name,
     ipAddress: req.ipAddress,
     location: req.location,
     time: moment().format("hh:mm A"),
-    email: updatedUser.email,
+    email: updatedMerchant.email,
     type: "login-success",
   };
 
