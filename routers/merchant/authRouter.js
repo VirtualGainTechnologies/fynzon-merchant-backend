@@ -1,5 +1,5 @@
-const { body } = require("express-validator");
 const router = require("express").Router();
+const { body } = require("express-validator");
 
 const {
   sendRegistrationOtp,
@@ -12,63 +12,58 @@ const {
 
 const sendRegistrationOtpValidator = [
   body("category")
-    .notEmpty()
     .trim()
-    .withMessage("Please provide category")
+    .notEmpty()
+    .withMessage("The field category is required")
     .isIn(["INDIVIDUAL", "ENTITY"])
     .withMessage("Category must be either INDIVIDUAL or ENTITY"),
   body("email")
-    .notEmpty()
     .trim()
-    .withMessage("Please provide email id")
+    .notEmpty()
+    .withMessage("The field email is required")
     .isEmail()
     .withMessage("Invalid email id")
     .toLowerCase(),
-  body("password").notEmpty().trim().withMessage("Please provide password"),
+  body("password").notEmpty().trim().withMessage("The field password is required"),
 
   body("businessName")
     .if(body("category").custom((value) => value === "ENTITY"))
-    .notEmpty()
     .trim()
-    .withMessage("Please provide business name")
+    .notEmpty()
+    .withMessage("The field businessName is required")
     .toLowerCase(),
   body("businessCategory")
     .if(body("category").custom((value) => value === "ENTITY"))
-    .notEmpty()
     .trim()
-    .withMessage("Please provide business category"),
+    .notEmpty()
+    .withMessage("The field businessCategory is required"),
 
   body("fullName")
     .if(body("category").custom((value) => value === "INDIVIDUAL"))
-    .notEmpty()
     .trim()
-    .withMessage("Please provide full name"),
+    .notEmpty()
+    .withMessage("The field fullName is required"),
   body("profession")
     .if(body("category").custom((value) => value === "INDIVIDUAL"))
-    .notEmpty()
     .trim()
-    .withMessage("Please provide profession"),
+    .notEmpty()
+    .withMessage("The field profession is required"),
 
   body("phoneCode").notEmpty().trim().withMessage("Please provide phone code"),
   body("phone")
-    .notEmpty()
     .trim()
-    .withMessage("Please provide phone number")
-    .custom(async (val, { req }) => {
-      if (/^[6-9]{1}[0-9]{9}$/.test(val)) {
-        return true;
-      } else {
-        throw new Error("Invalid phone number");
-      }
-    }),
+    .notEmpty()
+    .withMessage("The field phoneCode is required")
+    .isMobilePhone("any", { strictMode: false })
+    .withMessage("Invalid phone number"),
 ];
 
 const verifyRegistrationOtpValidator = [
   body("otpId").notEmpty().trim().withMessage("The field otpId is missing"),
   body("otp")
-    .notEmpty()
     .trim()
-    .withMessage("The field otp is missing")
+    .notEmpty()
+    .withMessage("The field otpID is required")
     .isLength({ min: 6, max: 6 })
     .withMessage("OTP must be of 6 digit"),
   ...sendRegistrationOtpValidator,
