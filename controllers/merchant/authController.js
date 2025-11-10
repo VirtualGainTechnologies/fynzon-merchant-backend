@@ -5,10 +5,12 @@ const { registerMerchant } = require("../../services/merchant/authService");
 const { sendEmail } = require("../../utils/emailDispatcher");
 
 exports.sendRegistrationOtp = async (req, res) => {
+  const req_body = { ...req.body };
+
   const emailObject = {
     type: "register-otp",
-    email: req.body.email,
-    userName: req.body.userName,
+    email: req_body.email,
+    userName: req_body.userName,
     title: "Registration",
   };
 
@@ -23,7 +25,7 @@ exports.sendRegistrationOtp = async (req, res) => {
     error: false,
     data: {
       otpId: emailData?.data.otpId,
-      ...req.body,
+      ...req_body,
     },
   });
 };
@@ -31,10 +33,13 @@ exports.sendRegistrationOtp = async (req, res) => {
 exports.verifyRegistrationOtp = async (req, session) => {
   const req_body = { ...req.body };
 
+  //verify otp
   const verifiedOtp = await verifyOtp(req_body.otpId, req_body.otp);
   if (verifiedOtp.error) {
     throw new AppError(400, verifiedOtp.message || "Invalid or expired OTP");
   }
+
+  //register merchant
   const payload = {
     ...req_body,
     ipAddress: req.ipAddress,
@@ -80,6 +85,7 @@ exports.verifyRegistrationOtp = async (req, session) => {
   if (isEmailSent.error) {
     throw new AppError(400, isEmailSent.message);
   }
+
   return {
     message: registerData.message || "Registration successful",
     error: false,

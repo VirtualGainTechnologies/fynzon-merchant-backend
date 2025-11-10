@@ -48,7 +48,7 @@ exports.updateAllMerchantByFilter = (
 
 exports.registerMerchant = async (req_body, session) => {
   try {
-    //chekc merchant
+    //check merchant
     let filter = {
       $or: [
         ...(req_body.email && [{ email: req_body.email }]),
@@ -149,7 +149,7 @@ exports.registerMerchant = async (req_body, session) => {
     };
   } catch (err) {
     return {
-      message: err.message,
+      message: err?.message || "Error in registering merchant",
       error: true,
       data: null,
     };
