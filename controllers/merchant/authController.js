@@ -1,3 +1,5 @@
+const jwt = require("jsonwebtoken");
+
 const { sendOtpToEmail } = require("../../utils/sendOtp");
 const AppError = require("../../utils/AppError");
 const { verifyOtp } = require("../../utils/verifyOtp");
@@ -147,7 +149,7 @@ exports.verifyLoginOtp = async (req, res) => {
 
   // create token
   const jwtToken = jwt.sign(
-    { data: req_body?.email ? req_body?.email : req_body?.phone },
+    { data: req_body?.email },
     process.env.USER_JWT_SECRET,
     {
       expiresIn: process.env.USER_JWT_EXPIRES_IN,
