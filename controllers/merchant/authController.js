@@ -136,7 +136,7 @@ exports.sendLoginOtp = async (req, res) => {
   });
 };
 
-exports.login = async (req, res) => {
+exports.verifyLoginOtp = async (req, res) => {
   const req_body = Object.assign({}, req.body);
 
   // verify otp
@@ -153,8 +153,8 @@ exports.login = async (req, res) => {
       expiresIn: process.env.USER_JWT_EXPIRES_IN,
     }
   );
-  // update user
-  const updatedUser = await updateMerchantByFilter(
+  // update merchant
+  const updatedMerchant = await updateMerchantByFilter(
     { email: req_body.email },
     {
       token: jwtToken,
@@ -165,8 +165,8 @@ exports.login = async (req, res) => {
     { new: true, session }
   );
 
-  if (!updatedUser) {
-    throw new AppError(400, "Error in updating user");
+  if (!updatedMerchant) {
+    throw new AppError(400, "Error in updating merchant");
   }
   // getKycDetails
   const kycData = await getKycByFilter(

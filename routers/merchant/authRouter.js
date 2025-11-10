@@ -5,7 +5,7 @@ const {
   sendRegistrationOtp,
   verifyRegistrationOtp,
   sendLoginOtp,
-  login,
+  verifyLoginOtp,
 } = require("../../controllers/merchant/authController");
 const { catchAsync, catchAsyncWithSession } = require("../../utils/catchAsync");
 const {
@@ -77,6 +77,31 @@ const verifyRegistrationOtpValidator = [
   ...sendRegistrationOtpValidator,
 ];
 
+const sendLoginOtpValidator = [
+  body("email")
+    .notEmpty()
+    .withMessage("The field email is required")
+    .trim()
+    .isEmail()
+    .withMessage("Invalid email id")
+    .toLowerCase(),
+  body("password")
+    .notEmpty()
+    .trim()
+    .withMessage("The field password is required"),
+];
+
+const verifyLoginOtpValidator = [
+  body("otpId").notEmpty().trim().withMessage("The field otpId is missing"),
+  body("otp")
+    .trim()
+    .notEmpty()
+    .withMessage("The field otpID is required")
+    .isLength({ min: 6, max: 6 })
+    .withMessage("OTP must be of 6 digit"),
+  ...sendLoginOtpValidator,
+];
+
 router.post(
   "/registration/send-otp",
   sendRegistrationOtpValidator,
@@ -91,16 +116,18 @@ router.post(
 );
 
 router.post(
-  "/send-login-otp",
+  "/login/send-otp",
+  sendLoginOtpValidator,
   catchAsync("getIpAndLocation middleware", getIpAndLocation),
   catchAsync("checkMerchantLoginAttempts api", checkMerchantLoginAttempts),
   catchAsync("sendLoginOtp api", sendLoginOtp)
 );
 
 router.post(
-  "/login",
+  "/login/verify-otp",
+  verifyLoginOtpValidator,
   catchAsync("getIpAndLocation middleware", getIpAndLocation),
-  catchAsync("login api", login)
+  catchAsync("verifyLoginOtp api", verifyLoginOtp)
 );
 
 module.exports = router;

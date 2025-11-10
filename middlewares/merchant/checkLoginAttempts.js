@@ -29,7 +29,7 @@ const formatRemainingLockoutTime = (lockoutEndTime) => {
   return timeString;
 };
 
-exports.checkUserLoginAttempts = async (req, res, next) => {
+exports.checkMerchantLoginAttempts = async (req, res, next) => {
   const merchant = await getMerchantByFilter(
     { email: req.body.email },
     "_id email phone_code phone is_blocked password incorrect_login_count last_failed_login_at full_name business_name merchant_type",
