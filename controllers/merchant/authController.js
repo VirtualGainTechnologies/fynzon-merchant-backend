@@ -9,7 +9,7 @@ const {
 } = require("../../services/merchant/authService");
 const { sendEmail } = require("../../utils/emailDispatcher");
 const { getMerchantByFilter } = require("../../services/merchant/authService");
-const { getKycByFilter } = require("../../services/merchant/kycService");
+const {  getMerchantKycByFilter } = require("../../services/merchant/kycService");
 
 exports.sendRegistrationOtp = async (req, res) => {
   const req_body = Object.assign({}, req.body);
@@ -171,8 +171,8 @@ exports.verifyLoginOtp = async (req, res) => {
     throw new AppError(400, "Error in updating merchant");
   }
   // getKycDetails
-  const kycData = await getKycByFilter(
-    { user_id: updatedUser._id },
+  const kycData = await getMerchantKycByFilter(
+    { merchant_id: updatedMerchant._id },
     "_id kyc_status",
     { lean: true }
   );
