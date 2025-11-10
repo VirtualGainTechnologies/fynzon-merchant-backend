@@ -4,11 +4,16 @@ const { body } = require("express-validator");
 const {
   sendRegistrationOtp,
   verifyRegistrationOtp,
+  sendLoginOtp,
+  login,
 } = require("../../controllers/merchant/authController");
 const { catchAsync, catchAsyncWithSession } = require("../../utils/catchAsync");
 const {
   getIpAndLocation,
 } = require("../../middlewares/shared/ipLocationMiddleware");
+const {
+  checkMerchantLoginAttempts,
+} = require("../../middlewares/merchant/checkLoginAttempts");
 
 const sendRegistrationOtpValidator = [
   body("category")
@@ -24,7 +29,10 @@ const sendRegistrationOtpValidator = [
     .isEmail()
     .withMessage("Invalid email id")
     .toLowerCase(),
-  body("password").notEmpty().trim().withMessage("The field password is required"),
+  body("password")
+    .notEmpty()
+    .trim()
+    .withMessage("The field password is required"),
 
   body("businessName")
     .if(body("category").custom((value) => value === "ENTITY"))
@@ -80,6 +88,19 @@ router.post(
   verifyRegistrationOtpValidator,
   catchAsync("getIpAndLocation middleware", getIpAndLocation),
   catchAsyncWithSession("verifyRegistrationOtp api", verifyRegistrationOtp)
+);
+
+router.post(
+  "/send-login-otp",
+  catchAsync("getIpAndLocation middleware", getIpAndLocation),
+  catchAsync("checkMerchantLoginAttempts api", checkMerchantLoginAttempts),
+  catchAsync("sendLoginOtp api", sendLoginOtp)
+);
+
+router.post(
+  "/login",
+  catchAsync("getIpAndLocation middleware", getIpAndLocation),
+  catchAsync("login api", login)
 );
 
 module.exports = router;
