@@ -189,7 +189,7 @@ exports.verifyLoginOtp = async (req, res) => {
     phoneCode: updatedUser.phone_code,
     phone: updatedUser.phone,
     jwtToken: {
-      tokenName: "user_token",
+      tokenName: "merchant_token",
       token: updatedUser.token,
     },
     kycStatus: kycData?.kyc_status,
