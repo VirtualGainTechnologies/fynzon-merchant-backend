@@ -13,7 +13,7 @@ const { getMerchantByFilter } = require("../../services/merchant/authService");
 const {  getMerchantKycByFilter } = require("../../services/merchant/kycService");
 
 exports.sendRegistrationOtp = async (req, res) => {
-  const req_body = Object.assign({}, req.body);
+  const req_body = { ...req.body };
 
   const emailObject = {
     type: "register-otp",
@@ -39,7 +39,7 @@ exports.sendRegistrationOtp = async (req, res) => {
 };
 
 exports.verifyRegistrationOtp = async (req, session) => {
-  const req_body = Object.assign({}, req.body);
+  const req_body = {...req.body};
 
   //verify otp
   const verifiedOtp = await verifyOtp(req_body.otpId, req_body.otp);
@@ -102,7 +102,7 @@ exports.verifyRegistrationOtp = async (req, session) => {
 };
 
 exports.sendLoginOtp = async (req, res) => {
-  const req_body = Object.assign({}, req.body);
+  const req_body = {...req.body}
 
   // check user exists or not
   const merchantData = await getMerchantByFilter(
@@ -140,7 +140,7 @@ exports.sendLoginOtp = async (req, res) => {
 };
 
 exports.verifyLoginOtp = async (req, res) => {
-  const req_body = Object.assign({}, req.body);
+  const req_body = {...req.body}
 
   // verify otp
   const verifiedOtp = await verifyOtp(req_body.otpId, req_body.otp);
@@ -221,5 +221,119 @@ exports.verifyLoginOtp = async (req, res) => {
     message: "Login successful",
     error: false,
     data: response,
+  });
+  }
+  exports.sendForgotPasswordOtp = async (req, res) => {
+  const req_body = {...req.body};
+
+  //check user
+  const filter = {
+    ...(req_body.email && {
+      email: req_body.email,
+    }),
+  };
+
+  const merchantData = await getMerchantByFilter(
+    filter,
+    "email phone merchant_type business_name full_name",
+    {
+      lean: true,
+    }
+  );
+
+  if (!merchantData) {
+    const errorMessage = 
+    "This email is not registered"
+    throw new AppError(400, errorMessage);
+  }
+
+  //send otp
+  const payload = {
+    ...(req_body.email && {
+      type: "reset-password",
+      email: req_body.email,
+      userName:
+        merchantData.merchant_type === "ENTITY"
+          ? merchantData.business_name
+          : merchantData.full_name,
+      title: "Password reset",
+    })
+  };
+
+const otpData = await sendOtpToEmail(payload);
+
+if (otpData.error) {
+  throw new AppError(400, otpData.message);
+}
+
+ res.status(200).json({
+  message: `OTP sent to ${otpData?.data?.email ? "email" : "merchant"}`,
+  error: false,
+  data: otpData?.data,
+});
+};
+
+exports.verifyForgotPasswordOtp = async (req, res) => {
+  const req_body = { ...req.body };
+
+  // verify otp
+  const verifiedOtp = await verifyOtp(req_body.otpId, req_body.otp);
+  if (verifiedOtp.error) {
+    throw new AppError(400, verifiedOtp.message || "Invalid OTP");
+  }
+  // get user
+  const merchantData = await getMerchantByFilter(
+    { email: req_body.email },
+    "email password",
+    {}
+  );
+  if (!merchantData) {
+    throw new AppError(400, "Email is not registered");
+  }
+
+  // check same password is used or not
+  const isPasswordMatched = await merchantData.comparePassword(
+    req_body.newPassword
+  );
+  if (isPasswordMatched) {
+    throw new AppError(400, "This password is already in use");
+  }
+
+  // update user
+  const updatedMerchant = await updateMerchantByFilter(
+    { email: merchantData.email },
+    {
+      password: await bcrypt.hash(req_body.newPassword, 12),
+      incorrect_login_count: 0,
+      last_failed_login_at: null,
+      last_login_ip: req.ipAddress,
+      last_login_location: req.locationDetails,
+    },
+    { new: true }
+  );
+  if (!updatedMerchant) {
+    throw new AppError(400, "Error in updating details");
+  }
+
+  // send email
+  const emailObject = {
+    userName:
+      updatedMerchant.merchant_type === "ENTITY"
+        ? updatedMerchant.business_name
+        : updatedMerchant.full_name,
+    time: moment().format("DD MMM YYYY, hh:mmA"),
+    email: updatedMerchant.email,
+    type: "reset-password-success",
+  };
+
+  const isEmailSent = await sendEmail(emailObject);
+  if (isEmailSent.error) {
+    throw new AppError(400, isEmailSent.message);
+  }
+
+  res.status(200).json({
+    message: "Password changed successfully",
+    error: false,
+    data: null,
   });
 };
