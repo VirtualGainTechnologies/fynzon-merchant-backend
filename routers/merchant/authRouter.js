@@ -121,6 +121,13 @@ const sendForgotPasswordOtpValidator = [
 ];
 
 const verifyForgotPasswordOtpValidator = [
+  body("otpId").notEmpty().trim().withMessage("The field otpId is missing"),
+  body("otp")
+    .trim()
+    .notEmpty()
+    .withMessage("The field otpID is required")
+    .isLength({ min: 6, max: 6 })
+    .withMessage("OTP must be of 6 digit"),
   body("email")
     .notEmpty()
     .withMessage("The field email is required")
