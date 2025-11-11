@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
-const moment=require("moment")
+const moment = require("moment");
+const bcrypt = require("bcryptjs");
 
 const { sendOtpToEmail } = require("../../utils/sendOtp");
 const AppError = require("../../utils/AppError");
@@ -10,7 +11,9 @@ const {
 } = require("../../services/merchant/authService");
 const { sendEmail } = require("../../utils/emailDispatcher");
 const { getMerchantByFilter } = require("../../services/merchant/authService");
-const {  getMerchantKycByFilter } = require("../../services/merchant/kycService");
+const {
+  getMerchantKycByFilter,
+} = require("../../services/merchant/kycService");
 
 exports.sendRegistrationOtp = async (req, res) => {
   const req_body = { ...req.body };
@@ -39,7 +42,7 @@ exports.sendRegistrationOtp = async (req, res) => {
 };
 
 exports.verifyRegistrationOtp = async (req, session) => {
-  const req_body = {...req.body};
+  const req_body = { ...req.body };
 
   //verify otp
   const verifiedOtp = await verifyOtp(req_body.otpId, req_body.otp);
@@ -102,7 +105,7 @@ exports.verifyRegistrationOtp = async (req, session) => {
 };
 
 exports.sendLoginOtp = async (req, res) => {
-  const req_body = {...req.body}
+  const req_body = { ...req.body };
 
   // check user exists or not
   const merchantData = await getMerchantByFilter(
@@ -140,7 +143,7 @@ exports.sendLoginOtp = async (req, res) => {
 };
 
 exports.verifyLoginOtp = async (req, res) => {
-  const req_body = {...req.body}
+  const req_body = { ...req.body };
 
   // verify otp
   const verifiedOtp = await verifyOtp(req_body.otpId, req_body.otp);
@@ -222,55 +225,44 @@ exports.verifyLoginOtp = async (req, res) => {
     error: false,
     data: response,
   });
-  }
-  exports.sendForgotPasswordOtp = async (req, res) => {
-  const req_body = {...req.body};
+};
 
-  //check user
-  const filter = {
-    ...(req_body.email && {
-      email: req_body.email,
-    }),
-  };
+exports.sendForgotPasswordOtp = async (req, res) => {
+  const req_body = { ...req.body };
 
+  // check user
   const merchantData = await getMerchantByFilter(
-    filter,
+    { email: req_body.email },
     "email phone merchant_type business_name full_name",
     {
       lean: true,
     }
   );
-
   if (!merchantData) {
-    const errorMessage = 
-    "This email is not registered"
-    throw new AppError(400, errorMessage);
+    throw new AppError(400, "Email is not registered");
   }
 
-  //send otp
+  // send otp
   const payload = {
-    ...(req_body.email && {
-      type: "reset-password",
-      email: req_body.email,
-      userName:
-        merchantData.merchant_type === "ENTITY"
-          ? merchantData.business_name
-          : merchantData.full_name,
-      title: "Password reset",
-    })
+    type: "reset-password",
+    email: req_body.email,
+    userName:
+      merchantData.merchant_type === "ENTITY"
+        ? merchantData.business_name
+        : merchantData.full_name,
+    title: "Password reset",
   };
 
-const otpData = await sendOtpToEmail(payload);
+  const otpData = await sendOtpToEmail(payload);
+  if (otpData.error) {
+    throw new AppError(400, otpData.message);
+  }
 
-if (otpData.error) {
-  throw new AppError(400, otpData.message);
-}
-
- res.status(200).json({
-  message: `OTP sent to ${otpData?.data?.email ? "email" : "merchant"}`,
-  error: false,
-  data: otpData?.data,
-});
+  res.status(200).json({
+    message: `OTP sent to email`,
+    error: false,
+    data: otpData?.data,
+  });
 };
 
 exports.verifyForgotPasswordOtp = async (req, res) => {
@@ -281,7 +273,8 @@ exports.verifyForgotPasswordOtp = async (req, res) => {
   if (verifiedOtp.error) {
     throw new AppError(400, verifiedOtp.message || "Invalid OTP");
   }
-  // get user
+
+  // get merchant
   const merchantData = await getMerchantByFilter(
     { email: req_body.email },
     "email password",
@@ -299,7 +292,7 @@ exports.verifyForgotPasswordOtp = async (req, res) => {
     throw new AppError(400, "This password is already in use");
   }
 
-  // update user
+  // update merchant
   const updatedMerchant = await updateMerchantByFilter(
     { email: merchantData.email },
     {

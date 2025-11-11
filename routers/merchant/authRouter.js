@@ -7,6 +7,7 @@ const {
   sendLoginOtp,
   verifyLoginOtp,
   sendForgotPasswordOtp,
+  verifyForgotPasswordOtp,
 } = require("../../controllers/merchant/authController");
 const { catchAsync, catchAsyncWithSession } = require("../../utils/catchAsync");
 const {
@@ -15,7 +16,6 @@ const {
 const {
   checkMerchantLoginAttempts,
 } = require("../../middlewares/merchant/checkLoginAttempts");
-const { sendOtpToEmail } = require("../../utils/sendOtp");
 
 const sendRegistrationOtpValidator = [
   body("category")
@@ -110,9 +110,8 @@ const verifyLoginOtpValidator = [
     .toLowerCase(),
 ];
 
-const sendOtpValidator = [
+const sendForgotPasswordOtpValidator = [
   body("email")
-    .if(body("mode").isIn(["EMAIL"]))
     .notEmpty()
     .withMessage("The field email is required")
     .trim()
@@ -121,8 +120,21 @@ const sendOtpValidator = [
     .toLowerCase(),
 ];
 
-// Registration 
+const verifyForgotPasswordOtpValidator = [
+  body("email")
+    .notEmpty()
+    .withMessage("The field email is required")
+    .trim()
+    .isEmail()
+    .withMessage("Invalid email id")
+    .toLowerCase(),
+  body("newPassword")
+    .notEmpty()
+    .trim()
+    .withMessage("Please provide new password"),
+];
 
+// Registration
 router.post(
   "/registration/send-otp",
   sendRegistrationOtpValidator,
@@ -137,7 +149,6 @@ router.post(
 );
 
 // login
-
 router.post(
   "/login/send-otp",
   sendLoginOtpValidator,
@@ -153,16 +164,17 @@ router.post(
   catchAsync("verifyLoginOtp api", verifyLoginOtp)
 );
 
-// forgot password
-
+// Forgot password
 router.post(
   "/forgot-password/send-otp",
-  sendOtpValidator,
+  sendForgotPasswordOtpValidator,
   catchAsync("sendForgotPasswordOtp api", sendForgotPasswordOtp)
 );
 
 router.post(
   "/forgot-password/verify-otp",
-  catchAsync("forgotPasswordHandler api", sendForgotPasswordOtp)
+  verifyForgotPasswordOtpValidator,
+  catchAsync("getIpAndLocation middleware", getIpAndLocation),
+  catchAsync("verifyForgotPasswordOtp api", verifyForgotPasswordOtp)
 );
 module.exports = router;
