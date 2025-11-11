@@ -8,7 +8,7 @@ const { verifyOtp } = require("../../utils/verifyOtp");
 const {
   registerMerchant,
   updateMerchantByFilter,
-  getMerchantByFilter
+  getMerchantByFilter,
 } = require("../../services/merchant/authService");
 const { sendEmail } = require("../../utils/emailDispatcher");
 const {
@@ -266,13 +266,23 @@ exports.sendForgotPasswordOtp = async (req, res) => {
 };
 
 exports.verifyForgotPasswordOtp = async (req, res) => {
-  const req_body = { ...req.body };
+  const req_body = Object.assign({}, req.body);
 
-  // verify otp
+  //verify otp
   const verifiedOtp = await verifyOtp(req_body.otpId, req_body.otp);
   if (verifiedOtp.error) {
     throw new AppError(400, verifiedOtp.message || "Invalid OTP");
   }
+
+  res.status(200).json({
+    message: "Verified successfully",
+    error: false,
+    data: null,
+  });
+};
+
+exports.changePassword = async (req, res) => {
+  const req_body = { ...req.body };
 
   // get merchant
   const merchantData = await getMerchantByFilter(

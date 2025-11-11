@@ -8,6 +8,7 @@ const {
   verifyLoginOtp,
   sendForgotPasswordOtp,
   verifyForgotPasswordOtp,
+  changePassword,
 } = require("../../controllers/merchant/authController");
 const { catchAsync, catchAsyncWithSession } = require("../../utils/catchAsync");
 const {
@@ -128,6 +129,9 @@ const verifyForgotPasswordOtpValidator = [
     .withMessage("The field otpID is required")
     .isLength({ min: 6, max: 6 })
     .withMessage("OTP must be of 6 digit"),
+];
+
+const changePasswordValidator = [
   body("email")
     .notEmpty()
     .withMessage("The field email is required")
@@ -181,7 +185,13 @@ router.post(
 router.post(
   "/forgot-password/verify-otp",
   verifyForgotPasswordOtpValidator,
-  catchAsync("getIpAndLocation middleware", getIpAndLocation),
   catchAsync("verifyForgotPasswordOtp api", verifyForgotPasswordOtp)
+);
+
+router.post(
+  "/forgot-password",
+  changePasswordValidator,
+  catchAsync("getIpAndLocation middleware", getIpAndLocation),
+  catchAsync("changePassword api", changePassword)
 );
 module.exports = router;
