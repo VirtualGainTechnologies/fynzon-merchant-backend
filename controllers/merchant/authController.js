@@ -19,10 +19,8 @@ exports.sendRegistrationOtp = async (req, res) => {
   const req_body = { ...req.body };
 
   const emailObject = {
-    type: "register-otp",
+    type: "register",
     email: req_body.email,
-    userName: req_body.userName,
-    title: "Registration",
   };
 
   const emailData = await sendOtpToEmail(emailObject);
@@ -120,13 +118,8 @@ exports.sendLoginOtp = async (req, res) => {
   }
   // Send OTP to email
   const otpData = await sendOtpToEmail({
-    type: "login-otp",
+    type: "login",
     email: req_body.email,
-    userName:
-      merchantData.merchant_type === "ENTITY"
-        ? merchantData.business_name
-        : merchantData.full_name,
-    title: "Login",
   });
 
   if (otpData.error) {
@@ -244,13 +237,8 @@ exports.sendForgotPasswordOtp = async (req, res) => {
 
   // send otp
   const payload = {
-    type: "reset-password",
+    type: "reset password",
     email: req_body.email,
-    userName:
-      merchantData.merchant_type === "ENTITY"
-        ? merchantData.business_name
-        : merchantData.full_name,
-    title: "Password reset",
   };
 
   const otpData = await sendOtpToEmail(payload);

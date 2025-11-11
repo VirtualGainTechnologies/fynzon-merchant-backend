@@ -65,7 +65,7 @@ exports.catchAsyncWithSession = (fnName, fn) => {
           if (session.inTransaction()) await session.abortTransaction();
 
           if (isTransientError(err)) {
-            console.log(`Attempt ${attempt} failed → retrying...`);
+            logger.info(`Attempt ${attempt} failed → retrying...`);
             throw err;
           } else {
             bail(err);
@@ -81,7 +81,7 @@ exports.catchAsyncWithSession = (fnName, fn) => {
         maxTimeout: 2000,
         randomize: true,
       }
-    ).catch(next); // <- Pass final error to Express
+    ).catch(next);
   };
 };
 

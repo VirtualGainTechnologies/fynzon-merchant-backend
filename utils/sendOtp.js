@@ -30,25 +30,25 @@ exports.sendOtpToEmail = async (emailData) => {
     let body = await getOtpEmailTemplate({ ...emailData, otp });
 
     switch (emailData?.type) {
-      case "register-otp":
-        subject = `OTP to register in Pezon is ${otp}`;
+      case "register":
+        subject = `OTP to register in fynzon is ${otp}`;
         break;
-      case "login-otp":
-        subject = `OTP to login in Pezon is ${otp}`;
+      case "login":
+        subject = `OTP to login in fynzon is ${otp}`;
         break;
-      case "reset-password":
-        subject = `OTP to reset password in Pezon is ${otp}`;
+      case "reset password":
+        subject = `OTP to reset password in fynzon is ${otp}`;
         break;
       default:
         throw new AppError(400, "Invalid email type");
     }
 
-    // await sgMail.send({
-    //   from: process.env.SENDGRID_FROM_EMAIL,
-    //   to: emailData.email,
-    //   subject: subject,
-    //   html: body,
-    // });
+    await sgMail.send({
+      from: process.env.SENDGRID_FROM_EMAIL,
+      to: emailData.email,
+      subject: subject,
+      html: body,
+    });
 
     return {
       message: `OTP sent to email`,
