@@ -1,124 +1,80 @@
-import { logger } from "./winstonLogger";
-
 const { Redis } = require("ioredis");
+const { logger } = require("./winstonLogger");
 
-const {
-  REDIS_HOST = "127.0.0.1",
-  REDIS_PORT = 6379,
-  REDIS_PASSWORD = "",
-  REDIS_DB = 0,
-  REDIS_RETRY_DELAY = 2000,
-  REDIS_MAX_RETRIES = 10,
-} = process.env;
+const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
-let redisClient;
-const createRedisClient = () => {
-  if (redisClient) return redisClient;
+// Initialize Redis client
+const redis = new Redis(REDIS_URL, {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: true,
+  reconnectOnError: (err) => {
+    if (err.message.includes("READONLY")) {
+      logger.warn("Redis is in READONLY state. Reconnecting...");
+      return true;
+    }
+    return false;
+  },
+  tls: REDIS_URL.startsWith("rediss://") ? {} : undefined,
+});
 
-  redisClient = new Redis({
-    host: REDIS_HOST,
-    port: Number(REDIS_PORT),
-    password: REDIS_PASSWORD || undefined,
-    db: Number(REDIS_DB),
-    retryStrategy: (times) => {
-      const delay = Math.min(times * 500, Number(REDIS_RETRY_DELAY));
-      console.warn(
-        `Redis reconnect attempt #${times} — retrying in ${delay}ms`
-      );
-      if (times > REDIS_MAX_RETRIES) {
-        console.error("Redis connection failed after max retries");
-        return null;
-      }
-      return delay;
-    },
-    reconnectOnError: (err) => {
-      const targetErrors = ["READONLY", "ETIMEDOUT", "ECONNRESET"];
-      if (targetErrors.some((msg) => err.message.includes(msg))) {
-        console.warn("Redis connection error, reconnecting...");
-        return true;
-      }
-      return false;
-    },
-  });
+// Connection Events
+redis.on("connect", () => logger.info("Redis connected.."));
+redis.on("ready", () => logger.info("Redis ready.."));
+redis.on("reconnecting", () => logger.warn("Redis reconnecting..."));
+redis.on("close", () => logger.warn("Redis connection closed"));
+redis.on("error", (err) => logger.error(`Redis error: ${err.message}`));
 
-  // Logging
-  redisClient.on("connect", () => logger.log("Connected to Redis"));
-  redisClient.on("ready", () => logger.log("Redis client ready for commands"));
-  redisClient.on("error", (err) =>
-    logger.error("Redis Client Error:", err.message)
-  );
-  redisClient.on("close", () => logger.warn("Redis connection closed"));
-  redisClient.on("reconnecting", () => logger.info("Reconnecting to Redis..."));
-  return redisClient;
-};
-
-export const closeRedisConnection = async () => {
-  if (redisClient) {
-    await redisClient.quit();
-    logger.info("Redis connection closed gracefully");
+// Graceful Shutdown
+process.on("SIGINT", async () => {
+  try {
+    logger.info("Closing Redis connection...");
+    await redis.quit();
+    logger.info("Redis connection closed cleanly");
+  } catch (err) {
+    logger.error("Error closing Redis connection:", err);
+  } finally {
+    process.exit(0);
   }
-};
+});
 
-export const redis = createRedisClient();
-
-// function to set different Redis commands
 const setRedis = async (command, ...args) => {
   try {
-    let result;
-    switch (command) {
+    switch (command.toUpperCase()) {
       case "SET":
-        result = await redisClient.set(...args);
-        break;
-
+        return await redis.set(...args);
       case "SETEX":
-        result = await redisClient.setEx(...args);
-        break;
-
+        return await redis.setex(...args);
       case "HSET":
-        result = await redisClient.hSet(...args);
-        break;
-
+        return await redis.hset(...args);
       case "HMSET":
-        result = await redisClient.hmSet(...args);
-        break;
-
+        return await redis.hmset(...args);
       default:
-        throw new Error(`Unsupported command: ${command}`);
+        throw new AppError(400, `Unsupported Redis command: ${command}`);
     }
-    return result;
   } catch (err) {
-    throw new AppError(400, `Error executing ${command} command:`, err);
+    logger.error(`Redis SET command failed (${command}): ${err.message}`);
+    throw new AppError(500, `Error executing Redis ${command}: ${err.message}`);
   }
 };
 
-// function to get different Redis commands
 const getRedis = async (command, ...args) => {
   try {
-    let result;
-    switch (command) {
+    switch (command.toUpperCase()) {
       case "GET":
-        result = await redisClient.get(...args);
-        break;
-
+        return await redis.get(...args);
       case "HGET":
-        result = await redisClient.hGet(...args);
-        break;
-
+        return await redis.hget(...args);
       case "HGETALL":
-        result = await redisClient.hGetAll(...args);
-        break;
-
+        return await redis.hgetall(...args);
       case "LRANGE":
-        result = await redisClient.lRange(...args);
-        break;
-
+        return await redis.lrange(...args);
       default:
-        throw new Error(`Unsupported command: ${command}`);
+        throw new AppError(400, `Unsupported Redis command: ${command}`);
     }
-    return result;
   } catch (err) {
-    throw new AppError(400, `Error executing ${command} command:`, err);
+    logger.error(`Redis GET command failed (${command}): ${err.message}`);
+    throw new AppError(500, `Error executing Redis ${command}: ${err.message}`);
   }
 };
 
-module.exports = { getRedis, setRedis };
+module.export = { redis, getRedis, setRedis };
