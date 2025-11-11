@@ -8,9 +8,9 @@ const { verifyOtp } = require("../../utils/verifyOtp");
 const {
   registerMerchant,
   updateMerchantByFilter,
+  getMerchantByFilter
 } = require("../../services/merchant/authService");
 const { sendEmail } = require("../../utils/emailDispatcher");
-const { getMerchantByFilter } = require("../../services/merchant/authService");
 const {
   getMerchantKycByFilter,
 } = require("../../services/merchant/kycService");
