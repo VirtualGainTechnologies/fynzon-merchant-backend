@@ -9,6 +9,7 @@ const {
   sendForgotPasswordOtp,
   verifyForgotPasswordOtp,
   changePassword,
+  validateMerchant,
 } = require("../../controllers/merchant/authController");
 const { catchAsync, catchAsyncWithSession } = require("../../utils/catchAsync");
 const {
@@ -17,6 +18,19 @@ const {
 const {
   checkMerchantLoginAttempts,
 } = require("../../middlewares/merchant/checkLoginAttempts");
+
+const validateMerchantValidator = [
+  body("email").optional({ nullable: true, checkFalsy: true }).toLowerCase(),
+  body("businessName")
+    .optional({ nullable: true, checkFalsy: true })
+    .toLowerCase(),
+  body("phone")
+    .trim()
+    .notEmpty()
+    .withMessage("The field phoneCode is required")
+    .isMobilePhone("any", { strictMode: false })
+    .withMessage("Invalid phone number"),
+];
 
 const sendRegistrationOtpValidator = [
   body("category")
@@ -144,6 +158,13 @@ const changePasswordValidator = [
     .trim()
     .withMessage("Please provide new password"),
 ];
+
+// Validate merchant
+router.post(
+  "/validate-merchant",
+  validateMerchantValidator,
+  catchAsync("validateMerchant api", validateMerchant)
+);
 
 // Registration
 router.post(

@@ -6,6 +6,7 @@ const { createOtp, deleteManyOtp } = require("../services/shared/otpServices");
 const { getOtpEmailTemplate } = require("./emailTemplates");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 exports.sendOtpToEmail = async (emailData) => {
   try {
     const otp = otpGenerator.generate(6, {

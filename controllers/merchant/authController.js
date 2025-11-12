@@ -14,6 +14,59 @@ const { sendEmail } = require("../../utils/emailDispatcher");
 const {
   getMerchantKycByFilter,
 } = require("../../services/merchant/kycService");
+const {
+  pvtltdToPrivateLimitedConverter,
+} = require("../../utils/pvtltdToPrivateLimitedConverter");
+
+exports.validateMerchant = async (req, res) => {
+  const req_body = { ...req.body };
+
+  const payload = {
+    ...(req_body.email && {
+      email: req_body.email,
+    }),
+    ...(req_body.businessName && {
+      business_name: pvtltdToPrivateLimitedConverter(req_body.businessName),
+    }),
+    ...(req_body.phone && {
+      phone: req_body.phone,
+    }),
+  };
+
+  const merchantData = await getMerchantByFilter(payload, "_id", {
+    lean: true,
+  });
+
+  const response = merchantData
+    ? {
+        message: payload?.email
+          ? "This email is already in use"
+          : payload?.business_name
+          ? "This business name is already in use"
+          : payload?.phone
+          ? "This phone number is already in use"
+          : "",
+        error: false,
+        data: {
+          userExists: true,
+        },
+      }
+    : {
+        message: payload?.email
+          ? "This email is available to use"
+          : payload?.business_name
+          ? "This business name is available to use"
+          : payload?.phone
+          ? "This phone number is available to use"
+          : "",
+        error: false,
+        data: {
+          userExists: false,
+        },
+      };
+
+  res.status(200).json(response);
+};
 
 exports.sendRegistrationOtp = async (req, res) => {
   const req_body = { ...req.body };
