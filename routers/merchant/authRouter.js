@@ -25,9 +25,7 @@ const validateMerchantValidator = [
     .optional({ nullable: true, checkFalsy: true })
     .toLowerCase(),
   body("phone")
-    .trim()
-    .notEmpty()
-    .withMessage("The field phoneCode is required")
+    .optional({ nullable: true, checkFalsy: true })
     .isMobilePhone("any", { strictMode: false })
     .withMessage("Invalid phone number"),
 ];
@@ -78,7 +76,7 @@ const sendRegistrationOtpValidator = [
   body("phone")
     .trim()
     .notEmpty()
-    .withMessage("The field phoneCode is required")
+    .withMessage("The field phone is required")
     .isMobilePhone("any", { strictMode: false })
     .withMessage("Invalid phone number"),
 ];
