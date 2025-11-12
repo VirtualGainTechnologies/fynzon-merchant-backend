@@ -1171,16 +1171,14 @@ exports.verifyBank = async (req, res, next) => {
       }
 
       const name = pvtltdToPrivateLimitedConverter(
-        chequeExtractedData.data?.result?.name
+        accountData.data?.result?.bankTransfer?.beneName ||
+          chequeExtractedData.data?.result?.name
       );
-
       // check bank and gstin belongs to same person or not
       if (
-        (kycData.gstin?.legal_name_of_business ||
-          kycData.gstin?.trade_name_of_business) &&
         name.toUpperCase() !=
-          (kycData.gstin?.legal_name_of_business?.toUpperCase() ||
-            kycData.gstin?.trade_name_of_business?.toUpperCase())
+        (kycData.gstin?.legal_name_of_business?.toUpperCase() ||
+          kycData.gstin?.trade_name_of_business?.toUpperCase())
       ) {
         throw new AppError(
           400,

@@ -7,6 +7,9 @@ const {
   getWelcomeLoginTemplate,
   getPasswordResetSuccessTemplate,
   getFailedLoginLockoutEmailTemplate,
+  getKycApprovedEmailTemplate,
+  getIndividualKycPendingEmailTemplate,
+  getEntityKycPendingEmailTemplate,
 } = require("./emailTemplates");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -31,6 +34,18 @@ exports.sendEmail = async (emailData) => {
         subject =
           "Suspicious Activity Detected — Your Pezon Account Is Temporarily Locked";
         body = await getFailedLoginLockoutEmailTemplate(emailData);
+        break;
+      case "kyc-approved":
+        subject = "Your KYC Is Approved — Welcome to Pezon!";
+        body = await getKycApprovedEmailTemplate(emailData);
+        break;
+      case "kyc-pending-individual":
+        subject = "Reminder: Complete Your Individual KYC Verification";
+        body = await getIndividualKycPendingEmailTemplate(emailData);
+        break;
+      case "kyc-pending-entity":
+        subject = "Reminder: Complete Your Business KYC Verification";
+        body = await getEntityKycPendingEmailTemplate(emailData);
         break;
       default:
         throw new AppError(400, "Invalid email type");
