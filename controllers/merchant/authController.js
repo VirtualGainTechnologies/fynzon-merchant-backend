@@ -249,7 +249,7 @@ exports.verifyLoginOtp = async (req, res) => {
     liveOnboardingEnabled: updatedMerchant.live_onboarding_enabled,
   };
 
-  // set cookies
+// set cookies
   res.cookie(response.jwtToken.tokenName, response.jwtToken.token, {
     httpOnly: false,
     secure: "auto",
