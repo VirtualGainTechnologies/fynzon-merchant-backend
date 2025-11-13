@@ -1292,7 +1292,7 @@ exports.verifyBank = async (req, res, next) => {
         const emailObject = {
           userName: req.businessName,
           email: req.email,
-          loginUrl: `${process.env.CLIENT_BASE_URL1}/auth/login`,
+          btnURL: `${process.env.CLIENT_BASE_URL1}/auth/login`,
           type: "kyc-approved",
         };
 
@@ -1501,7 +1501,7 @@ exports.verifySelfie = async (req, res, next) => {
         const emailObject = {
           userName: req.fullName,
           email: req.email,
-          loginUrl: `${process.env.CLIENT_BASE_URL1}/auth/login`,
+          btnURL: `${process.env.CLIENT_BASE_URL1}/auth/login`,
           type: "kyc-approved",
         };
 

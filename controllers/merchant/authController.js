@@ -249,7 +249,7 @@ exports.verifyLoginOtp = async (req, res) => {
     liveOnboardingEnabled: updatedMerchant.live_onboarding_enabled,
   };
 
-// set cookies
+  // set cookies
   res.cookie(response.jwtToken.tokenName, response.jwtToken.token, {
     httpOnly: false,
     secure: "auto",
@@ -265,6 +265,7 @@ exports.verifyLoginOtp = async (req, res) => {
         ? updatedMerchant.business_name
         : updatedMerchant.full_name,
     ipAddress: req.ipAddress,
+    device: `${req.useragent.os}, ${req.useragent.browser}`,
     location: req.location,
     time: moment().format("hh:mm A"),
     email: updatedMerchant.email,
@@ -366,22 +367,6 @@ exports.changePassword = async (req, res) => {
   );
   if (!updatedMerchant) {
     throw new AppError(400, "Error in updating details");
-  }
-
-  // send email
-  const emailObject = {
-    userName:
-      updatedMerchant.merchant_type === "ENTITY"
-        ? updatedMerchant.business_name
-        : updatedMerchant.full_name,
-    time: moment().format("DD MMM YYYY, hh:mmA"),
-    email: updatedMerchant.email,
-    type: "reset-password-success",
-  };
-
-  const isEmailSent = await sendEmail(emailObject);
-  if (isEmailSent.error) {
-    throw new AppError(400, isEmailSent.message);
   }
 
   res.status(200).json({

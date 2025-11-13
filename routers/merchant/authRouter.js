@@ -47,7 +47,20 @@ const sendRegistrationOtpValidator = [
   body("password")
     .notEmpty()
     .trim()
-    .withMessage("The field password is required"),
+    .withMessage("Password is missing")
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters long")
+    .custom((value) => {
+      const regex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+={}[\]\\|:;'<>,.?/])[a-zA-Z\d!@#$%^&*()_\-+={}[\]\\|:;'<>,.?/]{8,}$/;
+      if (!regex.test(value)) {
+        throw new Error(
+          "Password must contain at least one uppercase letter, one lowercase letter, one special character and one number"
+        );
+      } else {
+        return true;
+      }
+    }),
 
   body("businessName")
     .if(body("category").custom((value) => value === "ENTITY"))

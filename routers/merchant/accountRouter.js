@@ -1,8 +1,7 @@
-const { body } = require("express-validator");
 const router = require("express").Router();
+const { body } = require("express-validator");
 
 const { catchAsync, catchAsyncWithSession } = require("../../utils/catchAsync");
-const { verifyMerchantToken } = require("../../middlewares/merchant/verifyMerchantToken");
 const {
   sendEmailOtpForMobileChange,
   verifyEmailOtpForMobileChange,
@@ -16,65 +15,85 @@ const {
   sendOtpToChangePassword,
   getAccountData,
 } = require("../../controllers/merchant/accountController");
-
-const otpValidator = [
-  body("email")
-    .notEmpty()
-    .withMessage("The field email is required")
-    .trim()
-    .isEmail()
-    .withMessage("Invalid email id")
-    .toLowerCase(),
-
-  body("type")
-    .notEmpty()
-    .withMessage("The field type is required")
-    .trim()
-    .isString()
-    .withMessage("Type must be a string")
-    .toLowerCase(),
-];
+const {
+  verifyMerchantToken,
+} = require("../../middlewares/merchant/verifyMerchantToken");
 
 const verifyOtpValidator = [
   body("otpId").notEmpty().trim().withMessage("The otpId is required field"),
   body("otp")
     .notEmpty()
     .trim()
-    .withMessage("The field otpID is required")
+    .withMessage("The otp is required field")
     .isLength({ min: 6, max: 6 })
     .withMessage("OTP must be of 6 digit"),
-  ...otpValidator,
+];
+
+const sendMobileOtpForMobileChangeValidator = [
+  body("phoneCode").notEmpty().trim().withMessage("Please provide phone code"),
+  body("phone")
+    .trim()
+    .notEmpty()
+    .withMessage("The field phone is required")
+    .isMobilePhone("any", { strictMode: false })
+    .withMessage("Invalid phone number"),
+];
+
+const changeMobileNumberValidator = [
+  ...verifyOtpValidator,
+  ...sendMobileOtpForMobileChangeValidator,
+];
+
+const sendEmailOtpForEmailChangeValidator = [
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("The field email is required")
+    .isEmail()
+    .withMessage("Invalid email id")
+    .toLowerCase(),
+];
+
+const changeEmailIdValidator = [
+  ...verifyOtpValidator,
+  ...sendEmailOtpForEmailChangeValidator,
 ];
 
 const updatePasswordBodyValidator = [
   body("currentPassword")
     .notEmpty()
     .trim()
-    .withMessage("The field currentPassword is required"),
+    .withMessage("The currentPassword is required field"),
   body("newPassword")
     .notEmpty()
     .trim()
-    .withMessage("The field newPassword is required"),
+    .withMessage("New Password is missing")
+    .isLength({ min: 8 })
+    .withMessage("New Password must be at least 8 characters long")
+    .custom((value) => {
+      const regex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+={}[\]\\|:;'<>,.?/])[a-zA-Z\d!@#$%^&*()_\-+={}[\]\\|:;'<>,.?/]{8,}$/;
+      if (!regex.test(value)) {
+        throw new Error(
+          "New Password must contain at least one uppercase letter, one lowercase letter, one special character and one number"
+        );
+      } else {
+        return true;
+      }
+    }),
 ];
 
 const verifyOtpToChangePasswordValidator = [
-  body("otpId").notEmpty().trim().withMessage("The otpId is required field"),
-  body("otp")
-    .notEmpty()
-    .trim()
-    .withMessage("The field otpId is required")
-    .isLength({ min: 6, max: 6 })
-    .withMessage("OTP must be of 6 digit"),
+  ...verifyOtpValidator,
   ...updatePasswordBodyValidator,
 ];
 
-//update mobile number
+// update mobile number
 router
   .post(
     "/update-mobile/send-email-otp",
-    otpValidator,
     catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
-    catchAsync("sendEmailOtp api", sendEmailOtpForMobileChange)
+    catchAsync("sendEmailOtpForMobileChange api", sendEmailOtpForMobileChange)
   )
   .post(
     "/update-mobile/verify-email-otp",
@@ -87,22 +106,21 @@ router
   )
   .post(
     "/update-mobile/send-mobile-otp",
-    otpValidator,
+    sendMobileOtpForMobileChangeValidator,
     catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
     catchAsync("sendMobileOtpForMobileChange api", sendMobileOtpForMobileChange)
   )
   .post(
     "/update-mobile",
-    verifyOtpValidator,
+    changeMobileNumberValidator,
     catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
     catchAsyncWithSession("changeMobileNumber api", changeMobileNumber)
   );
 
-//update email id
+// update email id
 router
   .post(
     "/update-email/send-mobile-otp",
-    otpValidator,
     catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
     catchAsync("sendMobileOtpForEmailChange api", sendMobileOtpForEmailChange)
   )
@@ -117,18 +135,18 @@ router
   )
   .post(
     "/update-email/send-email-otp",
-    otpValidator,
+    sendEmailOtpForEmailChangeValidator,
     catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
     catchAsync("sendEmailOtpForEmailChange api", sendEmailOtpForEmailChange)
   )
   .post(
     "/update-email",
-    verifyOtpValidator,
+    changeEmailIdValidator,
     catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
     catchAsync("changeEmailId api", changeEmailId)
   );
 
-//update-password
+// update-password
 router
   .post(
     "/update-password/send-email-otp",
@@ -143,6 +161,7 @@ router
     catchAsync("updatePassword api", updatePassword)
   );
 
+// get account data
 router.get(
   "/get-account-details",
   catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
