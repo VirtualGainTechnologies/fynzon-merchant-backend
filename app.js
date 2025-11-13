@@ -86,8 +86,8 @@ const resendOtpRouter = require("./routers/shared/resendOtpRouter");
 
 // merchant-routers
 app.use("/auth/api/v1", merchantAuthRouter);
-app.use("/account/api/v1", accountRouter);
 app.use("/kyc/api/v1", merchantKycRouter);
+app.use("/account/api/v1", accountRouter);
 
 // shared-routers
 app.use("/resend-otp/api/v1", resendOtpRouter);
