@@ -76,6 +76,7 @@ app.use(useragent.express());
 // merchant-router-imports
 const merchantAuthRouter = require("./routers/merchant/authRouter");
 const merchantKycRouter = require("./routers/merchant/kycRouter");
+const accountRouter = require("./routers/merchant/accountRouter");
 
 // shared-router-imports
 const resendOtpRouter = require("./routers/shared/resendOtpRouter");
@@ -85,6 +86,7 @@ const resendOtpRouter = require("./routers/shared/resendOtpRouter");
 
 // merchant-routers
 app.use("/auth/api/v1", merchantAuthRouter);
+app.use("/account/api/v1", accountRouter);
 app.use("/kyc/api/v1", merchantKycRouter);
 
 // shared-routers

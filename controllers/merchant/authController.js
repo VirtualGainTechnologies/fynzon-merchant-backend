@@ -249,6 +249,15 @@ exports.verifyLoginOtp = async (req, res) => {
     liveOnboardingEnabled: updatedMerchant.live_onboarding_enabled,
   };
 
+// set cookies
+  res.cookie(response.jwtToken.tokenName, response.jwtToken.token, {
+    httpOnly: false,
+    secure: "auto",
+    maxAge: process.env.COOKIE_EXPIRATION_MILLISECONDS * 1,
+    signed: true,
+    sameSite: "strict",
+  });
+
   // send login email
   const emailObject = {
     userName:

@@ -44,12 +44,12 @@ exports.sendOtpToEmail = async (emailData) => {
         throw new AppError(400, "Invalid email type");
     }
 
-    await sgMail.send({
-      from: process.env.SENDGRID_FROM_EMAIL,
-      to: emailData.email,
-      subject: subject,
-      html: body,
-    });
+    // await sgMail.send({
+    //   from: process.env.SENDGRID_FROM_EMAIL,
+    //   to: emailData.email,
+    //   subject: subject,
+    //   html: body,
+    // });
 
     return {
       message: `OTP sent to email`,
