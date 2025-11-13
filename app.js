@@ -13,6 +13,7 @@ const globalErrorHandler = require("./middlewares/shared/globalErrorHandler");
 const { logger } = require("./utils/winstonLogger");
 
 require("dotenv").config();
+require("./utils/redisClient");
 // start express app
 const app = express();
 logger.info("Running environment is ===>", app.get("env"));
@@ -66,15 +67,16 @@ app.set("trust proxy", true);
 app.use(useragent.express());
 
 // data sanitisation against NoSql query injection
-app.use(mongoSanitize());
+// app.use(mongoSanitize());
 
 // data sanitisation against xss
-app.use(xss());
-
+// app.use(xss());
 //---------router imports---------//
 // admin-router-imports
 // merchant-router-imports
 const merchantAuthRouter = require("./routers/merchant/authRouter");
+const merchantKycRouter = require("./routers/merchant/kycRouter");
+const accountRouter = require("./routers/merchant/accountRouter");
 
 // shared-router-imports
 const resendOtpRouter = require("./routers/shared/resendOtpRouter");
@@ -84,6 +86,8 @@ const resendOtpRouter = require("./routers/shared/resendOtpRouter");
 
 // merchant-routers
 app.use("/auth/api/v1", merchantAuthRouter);
+app.use("/kyc/api/v1", merchantKycRouter);
+app.use("/account/api/v1", accountRouter);
 
 // shared-routers
 app.use("/resend-otp/api/v1", resendOtpRouter);

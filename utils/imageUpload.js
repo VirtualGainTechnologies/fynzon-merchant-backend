@@ -297,7 +297,6 @@ const deleteMultipleFiles = async (keys = []) => {
 
 module.exports = {
   uploadImage,
-  uploadExcel,
   uploadPublicFile,
   uploadMultiplePublicFile,
   uploadPrivateFile,

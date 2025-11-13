@@ -1,45 +1,45 @@
-const { UserKycModel } = require("../../models/user/userKycModel");
+const { MerchantKycModel } = require("../../models/merchant/kycModel");
 
-exports.createUserKyc = (object) => {
-  return UserKycModel.create(object);
+exports.createMerchantKyc = (object) => {
+  return MerchantKycModel.create(object);
 };
 
-exports.getUserKycById = (id, projections = null, options = {}) => {
-  return UserKycModel.findById(id, projections, options);
+exports.getMerchantKycById = (id, projections = null, options = {}) => {
+  return MerchantKycModel.findById(id, projections, options);
 };
 
-exports.getUserKycByFilter = (
+exports.getMerchantKycByFilter = (
   filters = {},
   projections = null,
   options = {}
 ) => {
-  return UserKycModel.findOne(filters, projections, options);
+  return MerchantKycModel.findOne(filters, projections, options);
 };
 
-exports.getAllUserKycByFilter = (
+exports.getAllMerchantKycByFilter = (
   filters = {},
   projections = null,
   options = {}
 ) => {
-  return UserKycModel.find(filters, projections, options);
+  return MerchantKycModel.find(filters, projections, options);
 };
 
-exports.updateUserKycById = (id, updateObject, options = {}) => {
-  return UserKycModel.findByIdAndUpdate(id, updateObject, options);
+exports.updateMerchantKycById = (id, updateObject, options = {}) => {
+  return MerchantKycModel.findByIdAndUpdate(id, updateObject, options);
 };
 
-exports.updateUserKycByFilter = (
+exports.updateMerchantKycByFilter = (
   filters = {},
   updateObject = {},
   options = {}
 ) => {
-  return UserKycModel.findOneAndUpdate(filters, updateObject, options);
+  return MerchantKycModel.findOneAndUpdate(filters, updateObject, options);
 };
 
-exports.updateAllUserKycByFilter = (
+exports.updateAllMerchantKycByFilter = (
   filters = {},
   updateObject = {},
   options = {}
 ) => {
-  return UserKycModel.updateMany(filters, updateObject, options);
+  return MerchantKycModel.updateMany(filters, updateObject, options);
 };

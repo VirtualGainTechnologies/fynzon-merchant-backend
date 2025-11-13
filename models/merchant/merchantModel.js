@@ -108,11 +108,11 @@ const merchantSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    user_kyc_id: {
+    kyc_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "kyc",
     },
-    user_wallet_id: {
+    wallet_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "wallet",
     },

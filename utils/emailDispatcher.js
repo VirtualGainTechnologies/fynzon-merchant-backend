@@ -5,9 +5,10 @@ const AppError = require("./AppError");
 const {
   getWelcomeRegistartionTemplate,
   getWelcomeLoginTemplate,
-  getPasswordResetSuccessTemplate,
   getFailedLoginLockoutEmailTemplate,
+  kycCompletionEmailTemplate,
 } = require("./emailTemplates");
+const { logger } = require("./winstonLogger");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 exports.sendEmail = async (emailData) => {
@@ -16,20 +17,21 @@ exports.sendEmail = async (emailData) => {
 
     switch (emailData?.type) {
       case "registration-success":
-        subject = "Pezon-registration is successful";
+        subject = "Fynzon-registration is successful";
         body = await getWelcomeRegistartionTemplate(emailData);
         break;
       case "login-success":
-        subject = "Welcome back to Pezon!";
+        subject = "Login is successful";
         body = await getWelcomeLoginTemplate(emailData);
         break;
-      case "reset-password-success":
-        subject = "Security Alert: Password Changed on Your Pezon Account";
-        body = await getPasswordResetSuccessTemplate(emailData);
+
+      case "kyc-approved":
+        subject = "Your KYC Verification is Complete";
+        body = await kycCompletionEmailTemplate(emailData);
         break;
       case "login-lockout":
         subject =
-          "Suspicious Activity Detected — Your Pezon Account Is Temporarily Locked";
+          "Suspicious Activity Detected — Your Fynzon Account Is Temporarily Locked";
         body = await getFailedLoginLockoutEmailTemplate(emailData);
         break;
       default:
@@ -49,7 +51,9 @@ exports.sendEmail = async (emailData) => {
       data: null,
     };
   } catch (err) {
-    console.log("error in catch block of sendEmail", err);
+    logger.error(
+      `error in catch block of sendEmail == > ${JSON.stringify(err)}`
+    );
     return {
       message: err.message || "Failed to send email",
       error: false,
