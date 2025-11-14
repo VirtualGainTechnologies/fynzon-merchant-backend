@@ -20,17 +20,23 @@ const {
 } = require("../../middlewares/merchant/verifyMerchantToken");
 
 const verifyOtpValidator = [
-  body("otpId").notEmpty().trim().withMessage("The otpId is required field"),
+  body("otpId")
+    .notEmpty()
+    .trim()
+    .withMessage("The field otpId is required"),
   body("otp")
     .notEmpty()
     .trim()
-    .withMessage("The otp is required field")
+    .withMessage("The field otp is required")
     .isLength({ min: 6, max: 6 })
     .withMessage("OTP must be of 6 digit"),
 ];
 
 const sendMobileOtpForMobileChangeValidator = [
-  body("phoneCode").notEmpty().trim().withMessage("Please provide phone code"),
+  body("phoneCode")
+    .notEmpty()
+    .trim()
+    .withMessage("The field phoneCode is required"),
   body("phone")
     .trim()
     .notEmpty()
