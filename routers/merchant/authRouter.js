@@ -10,6 +10,8 @@ const {
   verifyForgotPasswordOtp,
   changePassword,
   validateMerchant,
+  logout,
+  getMerchantDetails,
 } = require("../../controllers/merchant/authController");
 const { catchAsync, catchAsyncWithSession } = require("../../utils/catchAsync");
 const {
@@ -226,4 +228,14 @@ router.post(
   catchAsync("getIpAndLocation middleware", getIpAndLocation),
   catchAsync("changePassword api", changePassword)
 );
+
+// Logout
+router.get("/logout", catchAsync("logout api", logout));
+
+// Get user details
+router.get(
+  "/get-merchant-details",
+  catchAsync("getMerchantDetails api", getMerchantDetails)
+);
+
 module.exports = router;
