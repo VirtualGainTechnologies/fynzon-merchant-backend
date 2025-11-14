@@ -251,11 +251,11 @@ exports.verifyLoginOtp = async (req, res) => {
 
   // set cookies
   res.cookie(response.jwtToken.tokenName, response.jwtToken.token, {
-    httpOnly: false,
-    secure: "auto",
+    // httpOnly: false,
+    // secure: "auto",
     maxAge: process.env.COOKIE_EXPIRATION_MILLISECONDS * 1,
     signed: true,
-    sameSite: "strict",
+    // sameSite: "strict",
   });
 
   // send login email
