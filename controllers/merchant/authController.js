@@ -251,7 +251,7 @@ exports.verifyLoginOtp = async (req, res) => {
 
   // set cookies
   res.cookie(response.jwtToken.tokenName, response.jwtToken.token, {
-    // httpOnly: false,
+    httpOnly: true,
     // secure: "auto",
     maxAge: process.env.COOKIE_EXPIRATION_MILLISECONDS * 1,
     signed: true,
