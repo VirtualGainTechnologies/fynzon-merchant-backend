@@ -17,6 +17,7 @@ const {
 const {
   pvtltdToPrivateLimitedConverter,
 } = require("../../utils/pvtltdToPrivateLimitedConverter");
+const { verifyJwtToken } = require("../../utils/verifyJwtToken");
 
 exports.validateMerchant = async (req, res) => {
   const req_body = { ...req.body };
@@ -251,11 +252,11 @@ exports.verifyLoginOtp = async (req, res) => {
 
   // set cookies
   res.cookie(response.jwtToken.tokenName, response.jwtToken.token, {
-    httpOnly: false,
-    secure: "auto",
+    httpOnly: true,
+    // secure: "auto",
     maxAge: process.env.COOKIE_EXPIRATION_MILLISECONDS * 1,
     signed: true,
-    sameSite: "strict",
+    sameSite: "none",
   });
 
   // send login email
@@ -374,4 +375,94 @@ exports.changePassword = async (req, res) => {
     error: false,
     data: null,
   });
+};
+
+exports.logout = async (req, res) => {
+  const token = req.signedCookies["merchant_token"];
+
+  // update token
+  if (token) {
+    const updatedMerchant = await updateMerchantByFilter(
+      { token },
+      { token: "" },
+      { new: true }
+    );
+    if (!updatedMerchant) {
+      throw new AppError(400, "Failed to update merchant token");
+    }
+  }
+
+  // remove cookies
+  res.clearCookie("merchant_token");
+
+  res.status(200).json({
+    message: "Logged out successfully",
+    error: false,
+    data: null,
+  });
+};
+
+exports.getMerchantDetails = async (req, res) => {
+  const token = req.signedCookies["merchant_token"];
+  if (!token) {
+    return res.status(200).json({
+      message: "Token is missing",
+      error: false,
+      data: null,
+    });
+  }
+
+  // verify token
+  const tokenData = verifyJwtToken(token);
+
+  if (tokenData.error) {
+    const response = {
+      message: tokenData.message,
+      error: false,
+      data: null,
+    };
+    return res.status(200).json(response);
+  }
+
+  const merchantData = await getMerchantByFilter(
+    { token },
+    "_id merchant_type business_name business_category full_name profession email phone_code phone is_blocked onboarding_mode",
+    { lean: true }
+  );
+
+  if (!merchantData) {
+    return res.status(200).json({
+      message: "Failed to fetch details",
+      error: false,
+      data: null,
+    });
+  }
+
+  if (merchantData.is_blocked) {
+    return res.status(200).json({
+      message:
+        "Your account has been temporarily restricted due to security concerns",
+      error: false,
+      data: null,
+    });
+  }
+
+  response = {
+    message: "Data fecthed successfully",
+    error: false,
+    data: {
+      merchantType: merchantData.merchant_type,
+      businessName: merchantData.business_name,
+      businessCategory: merchantData.business_category,
+      fullName: merchantData.full_name,
+      profession: merchantData.profession,
+      email: merchantData.email,
+      phoneCode: merchantData.phone_code,
+      phone: merchantData.phone,
+      kycStatus: req.kycStatus,
+      onboardingMode: merchantData.onboarding_mode,
+    },
+  };
+
+  res.status(200).json(response);
 };
