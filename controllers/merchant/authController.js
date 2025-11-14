@@ -255,7 +255,7 @@ exports.verifyLoginOtp = async (req, res) => {
     // secure: "auto",
     maxAge: process.env.COOKIE_EXPIRATION_MILLISECONDS * 1,
     signed: true,
-    // sameSite: "strict",
+    sameSite: "none",
   });
 
   // send login email
