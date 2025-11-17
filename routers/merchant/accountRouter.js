@@ -86,7 +86,7 @@ const updatePasswordBodyValidator = [
 const verifyOtpToChangePasswordValidator = [
   ...verifyOtpValidator,
   ...updatePasswordBodyValidator,
-];
+];      
 
 // update mobile number
 router
