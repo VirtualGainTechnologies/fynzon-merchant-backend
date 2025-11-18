@@ -46,11 +46,11 @@ exports.catchAsyncWithSession = (fnName, fn) => {
               result.data.jwtToken.tokenName,
               result.data.jwtToken.token,
               {
-                httpOnly: false,
-                secure: "auto",
-                maxAge: process.env.COOKIE_EXPIRATION_MILLISECONDS * 1,
+                // httpOnly: false,
+                // secure: "auto",
+                // maxAge: process.env.COOKIE_EXPIRATION_MILLISECONDS * 1,
                 signed: true,
-                sameSite: "strict",
+                // sameSite: "strict",
               }
             );
             delete result.data.jwtToken;
