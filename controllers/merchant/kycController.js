@@ -1176,9 +1176,10 @@ exports.verifyBank = async (req, res, next) => {
       );
       // check bank and gstin belongs to same person or not
       if (
+        req.merchantType === "ENTITY" &&
         name.toUpperCase() !=
-        (kycData.gstin?.legal_name_of_business?.toUpperCase() ||
-          kycData.gstin?.trade_name_of_business?.toUpperCase())
+          (kycData.gstin?.legal_name_of_business?.toUpperCase() ||
+            kycData.gstin?.trade_name_of_business?.toUpperCase())
       ) {
         throw new AppError(
           400,
