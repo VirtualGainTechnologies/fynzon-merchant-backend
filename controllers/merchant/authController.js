@@ -447,6 +447,20 @@ exports.getMerchantDetails = async (req, res) => {
     });
   }
 
+  const kycData = await getMerchantKycByFilter(
+    { merchant_id: merchantData._id },
+    "_id kyc_status",
+    { lean: true }
+  );
+
+  if (!kycData) {
+    return res.status(200).json({
+      message: "Failed to fetch kyc details",
+      error: false,
+      data: null,
+    });
+  }
+
   response = {
     message: "Data fecthed successfully",
     error: false,
@@ -459,7 +473,7 @@ exports.getMerchantDetails = async (req, res) => {
       email: merchantData.email,
       phoneCode: merchantData.phone_code,
       phone: merchantData.phone,
-      kycStatus: req.kycStatus,
+      kycStatus: kycData.kyc_status,
       onboardingMode: merchantData.onboarding_mode,
     },
   };
