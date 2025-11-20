@@ -1,3 +1,4 @@
+const { xDownloadOptions } = require("helmet");
 const {
   getAdminByFilter,
   updateAdminById,
@@ -14,7 +15,7 @@ exports.checkAdminLoginAttempts = async (req, res, next) => {
       phone_code: req.body?.phoneCode,
       phone: req.body?.phone,
     }),
-  };
+  }; 
 
   // check admin exists or not
   const admin = await getAdminByFilter(
