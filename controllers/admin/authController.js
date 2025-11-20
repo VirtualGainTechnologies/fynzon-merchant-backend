@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+const mongoose = require("mongoose");
 
 const AppError = require("../../utils/AppError");
 const {
@@ -7,16 +8,15 @@ const {
   updateAdminByFilter,
   getAllAdminByFilter,
   updateAdminById,
-} = require("../../services/admin/adminAuthServices");
+} = require("../../services/admin/authServices");
 const { sendOtpToEmail, sendOtpToMobile } = require("../../utils/sendOtp");
 const { verifyOtp } = require("../../utils/verifyOtp");
 const { generateToken } = require("../../utils/jwtGenerator");
 const { verifyJwtToken } = require("../../utils/verifyJwtToken");
-const { default: mongoose } = require("mongoose");
 
-//validate admin
+// validate admin
 exports.validateAdmin = async (req, res) => {
-  const req_body = Object.assign({}, req.body);
+  const req_body = { ...req.body };
 
   const payload = {
     ...(req_body.email && {
@@ -60,18 +60,15 @@ exports.validateAdmin = async (req, res) => {
 
 // Register Super Admin
 exports.registerSuperAdmin = async (req, res) => {
-  const req_body = Object.assign({}, req.body);
+  const req_body = { ...req.body };
 
   const isSuperAdminExist = await getAdminByFilter({}, null, {
     lean: true,
   });
-
   if (isSuperAdminExist) {
     throw new AppError(400, "Super admin already exists");
   }
-
   const token = generateToken({ email: req_body.email });
-
   if (token.error) {
     throw new AppError(400, token.message);
   }
@@ -88,7 +85,6 @@ exports.registerSuperAdmin = async (req, res) => {
     last_login_location: req.locationDetails,
     last_login_date: new Date().getTime(),
   });
-
   if (!admin) {
     throw new AppError(400, "Failed to register super admin");
   }
@@ -110,9 +106,8 @@ exports.registerSuperAdmin = async (req, res) => {
 };
 
 // Register Sub Admin
-exports.registerSubAdmin = async (req, res, next) => {
-  const req_body = Object.assign({}, req.body);
-
+exports.upsertSubAdmin = async (req, res) => {
+  const req_body = { ...req.body };
   if (req.role !== "SUPER-ADMIN") {
     throw new AppError(400, "Only super admin is allowed to register subadmin");
   }
@@ -194,8 +189,7 @@ exports.registerSubAdmin = async (req, res, next) => {
 
 // Send Admin Login OTP
 exports.sendAdminLoginOtp = async (req, res) => {
-  const req_body = Object.assign({}, req.body);
-
+  const req_body = { ...req.body };
   let sendOtp = req_body.email
     ? await sendOtpToEmail({
         email: req.admin.email,
@@ -219,11 +213,10 @@ exports.sendAdminLoginOtp = async (req, res) => {
 
 // Verify Admin Login OTP
 exports.verifyAdminLoginOtp = async (req, res) => {
-  const req_body = Object.assign({}, req.body);
+  const req_body = { ...req.body };
 
   // verify otp
   const verifiedOtp = await verifyOtp(req_body.otpId, req_body.otp);
-
   if (verifiedOtp.error) {
     throw new AppError(400, verifiedOtp.message || "Invalid OTP");
   }
@@ -250,7 +243,6 @@ exports.verifyAdminLoginOtp = async (req, res) => {
   }
 
   const token = generateToken({ email: admin.email });
-
   if (token.error) {
     throw new AppError(400, token.message);
   }
@@ -266,7 +258,6 @@ exports.verifyAdminLoginOtp = async (req, res) => {
     },
     { new: true }
   );
-
   if (!updateAdminToken) {
     throw new AppError(400, "Failed to update token");
   }
@@ -296,13 +287,10 @@ exports.verifyAdminLoginOtp = async (req, res) => {
 //logout
 exports.logout = async (req, res) => {
   const token = req.signedCookies["admin_token"];
-
-  //update token
   if (token) {
     await updateAdminByFilter({ token }, { token: "" }, { new: true });
   }
-
-  ///remove cookies
+  // remove cookies
   res.clearCookie("token");
 
   res.status(200).json({
@@ -312,10 +300,9 @@ exports.logout = async (req, res) => {
   });
 };
 
-//get admin details
+// get admin details
 exports.getAdminProfile = async (req, res) => {
   const token = req.signedCookies["admin_token"];
-
   if (!token) {
     const response = {
       message: "Admin token is missing",
@@ -326,7 +313,6 @@ exports.getAdminProfile = async (req, res) => {
   }
 
   const tokenData = verifyJwtToken(token);
-
   if (tokenData.error) {
     const response = {
       message: tokenData.message,
@@ -400,20 +386,5 @@ exports.getAllSubAdmins = async (req, res, next) => {
       totalRecords: result.length,
       result,
     },
-  });
-};
-
-
-// Sample Transaction function
-exports.transaction = async (req, res, session) => {
-  const admin = await getAdminByFilter({}, null, { lean: true, session });
-  const admin_id = admin._id;
-
-  const updatedAdmin = await updateAdminById(admin_id, { _id: admin_id }, { session, new: true });
-
-  res.status(200).json({
-    message: "Admin Transaction completed",
-    error: false,
-    data: updatedAdmin,
   });
 };

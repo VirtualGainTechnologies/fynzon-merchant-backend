@@ -2,21 +2,25 @@ const router = require("express").Router();
 const { body } = require("express-validator");
 
 const {
+  validateAdmin,
   registerSuperAdmin,
   sendAdminLoginOtp,
   verifyAdminLoginOtp,
-  registerSubAdmin,
+  upsertSubAdmin,
   getAllSubAdmins,
   getAdminProfile,
   logout,
-  validateAdmin,
-} = require("../../controllers/admin/adminAuthController");
-
-const {checkAdminLoginAttempts} = require("../../middlewares/admin/adminLoginAttempts");
-const {getIpAndLocation} = require("../../middlewares/shared/ipLocationMiddleware");
-const {verifyAdminToken} = require("../../middlewares/admin/verifyAdminToken");
+} = require("../../controllers/admin/authController");
+const {
+  checkAdminLoginAttempts,
+} = require("../../middlewares/admin/adminLoginAttempts");
+const {
+  getIpAndLocation,
+} = require("../../middlewares/shared/ipLocationMiddleware");
+const {
+  verifyAdminToken,
+} = require("../../middlewares/admin/verifyAdminToken");
 const { catchAsync } = require("../../utils/catchAsync");
-
 
 const validateAdminValidator = [
   body("email").optional({ nullable: true, checkFalsy: true }).toLowerCase(),
@@ -62,8 +66,9 @@ const superAdminRegistrationBodyValidator = [
     .withMessage("Invalid email id")
     .toLowerCase(),
   body("password")
-    .optional()
     .trim()
+    .notEmpty()
+    .withMessage("The field password is required")
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters long")
     .custom((value) => {
@@ -129,8 +134,52 @@ const verifyOtpAfterAdminLoginBodyValidator = [
   ...adminLoginBodyValidator,
 ];
 
-const subAdminRegistrationBodyValidator = [
-  ...superAdminRegistrationBodyValidator,
+const upsertSubAdminBodyValidator = [
+  body("userName")
+    .notEmpty()
+    .trim()
+    .withMessage("The field userName is required")
+    .isLength({ max: 15 })
+    .withMessage("The field userName must be at most 15 characters"),
+  body("phoneCode")
+    .notEmpty()
+    .trim()
+    .withMessage("The field  phoneCode is required"),
+  body("phone")
+    .notEmpty()
+    .trim()
+    .withMessage("The field phone is required")
+    .custom(async (val, { req }) => {
+      const isIndian = /^[6-9]{1}[0-9]{9}$/.test(val);
+      if (!isIndian) {
+        throw new Error("Invalid phone number");
+      }
+
+      return true;
+    }),
+  body("email")
+    .notEmpty()
+    .trim()
+    .withMessage("The field email is required")
+    .isEmail()
+    .withMessage("Invalid email id")
+    .toLowerCase(),
+  body("password")
+    .trim()
+    .optional()
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters long")
+    .custom((value) => {
+      const regex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+={}[\]\\|:;'<>,.?/])[a-zA-Z\d!@#$%^&*()_\-+={}[\]\\|:;'<>,.?/]{8,}$/;
+      if (!regex.test(value)) {
+        throw new Error(
+          "Password must contain at least one uppercase letter, one lowercase letter, one special character and one number"
+        );
+      } else {
+        return true;
+      }
+    }),
   body("role")
     .notEmpty()
     .trim()
@@ -143,7 +192,6 @@ const subAdminRegistrationBodyValidator = [
     .withMessage("The filed userId must be a valid MongoDB ObjectId"),
 ];
 
-
 // Register Super Admin
 router.post(
   "/admin-registration",
@@ -155,19 +203,19 @@ router.post(
 // Register Sub Admin
 router.post(
   "/upsert-sub-admin",
-  subAdminRegistrationBodyValidator,
+  upsertSubAdminBodyValidator,
   catchAsync("getIpAndLocation middleware", getIpAndLocation),
   catchAsync("verifyAdminToken middleware", verifyAdminToken),
-  catchAsync("registerSubAdmin api", registerSubAdmin)
+  catchAsync("upsertSubAdmin api", upsertSubAdmin)
 );
 
 // Login Admin
 router.post(
-    "/send-login-otp",
-    adminLoginBodyValidator,
-    catchAsync("checkAdminLoginAttempts middleware", checkAdminLoginAttempts),
-    catchAsync("sendAdminLoginOtp", sendAdminLoginOtp)
-  );
+  "/send-login-otp",
+  adminLoginBodyValidator,
+  catchAsync("checkAdminLoginAttempts middleware", checkAdminLoginAttempts),
+  catchAsync("sendAdminLoginOtp", sendAdminLoginOtp)
+);
 
 // Verify login OTP
 router.post(
@@ -178,14 +226,12 @@ router.post(
 );
 
 //logout
-router.get(
-    "/logout", 
-    catchAsync("logout api", logout));
+router.get("/logout", catchAsync("logout api", logout));
 
 //get admin details
 router.get(
-    "/get-admin-profile",
-    catchAsync("getAdminProfile api", getAdminProfile)
+  "/get-admin-profile",
+  catchAsync("getAdminProfile api", getAdminProfile)
 );
 
 // Retrieve a list of all sub-admins
@@ -195,7 +241,7 @@ router.get(
   catchAsync("getAllSubAdmins api", getAllSubAdmins)
 );
 
-//validate admin api
+// Validate admin api
 router.post(
   "/validate-admin",
   validateAdminValidator,

@@ -1,7 +1,7 @@
 const {
   getAdminByFilter,
   updateAdminById,
-} = require("../../services/admin/adminAuthServices");
+} = require("../../services/admin/authServices");
 const AppError = require("../../utils/AppError");
 
 exports.checkAdminLoginAttempts = async (req, res, next) => {
