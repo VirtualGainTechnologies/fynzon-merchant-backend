@@ -1,5 +1,7 @@
-const { getMerchantByFilter } = require("../../services/merchant/authService");
-const { getMerchantKycByFilter } = require("../../services/merchant/kycService");
+const { getMerchantByFilter } = require("../../services/merchant/authServices");
+const {
+  getMerchantKycByFilter,
+} = require("../../services/merchant/kycServices");
 const AppError = require("../../utils/AppError");
 const { verifyJwtToken } = require("../../utils/verifyJwtToken");
 

@@ -143,7 +143,7 @@ router
     "/update-email",
     changeEmailIdValidator,
     catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
-    catchAsync("changeEmailId api", changeEmailId)
+    catchAsyncWithSession("changeEmailId api", changeEmailId)
   );
 
 // update-password

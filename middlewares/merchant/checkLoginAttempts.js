@@ -1,7 +1,7 @@
 const {
   updateMerchantById,
   getMerchantByFilter,
-} = require("../../services/merchant/authService");
+} = require("../../services/merchant/authServices");
 const AppError = require("../../utils/AppError");
 const { sendEmail } = require("../../utils/emailDispatcher");
 

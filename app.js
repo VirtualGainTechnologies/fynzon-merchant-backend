@@ -73,7 +73,7 @@ app.use(useragent.express());
 // app.use(xss());
 //---------router imports---------//
 // admin-router-imports
-const adminAuthRouter = require("./routers/admin/adminAuthRouter");
+const adminAuthRouter = require("./routers/admin/authRouter");
 
 // merchant-router-imports
 const merchantAuthRouter = require("./routers/merchant/authRouter");

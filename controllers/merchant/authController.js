@@ -9,11 +9,11 @@ const {
   registerMerchant,
   updateMerchantByFilter,
   getMerchantByFilter,
-} = require("../../services/merchant/authService");
+} = require("../../services/merchant/authServices");
 const { sendEmail } = require("../../utils/emailDispatcher");
 const {
   getMerchantKycByFilter,
-} = require("../../services/merchant/kycService");
+} = require("../../services/merchant/kycServices");
 const {
   pvtltdToPrivateLimitedConverter,
 } = require("../../utils/pvtltdToPrivateLimitedConverter");
