@@ -29,3 +29,4 @@ exports.getAllAdminByFilter = (
 exports.getAdminById = (id, projections = {}, options = {}) => {
   return AdminModel.findById(id, projections, options);
 };
+
