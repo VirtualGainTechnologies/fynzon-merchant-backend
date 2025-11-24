@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
-const { getAllMerchantKycByFilter } = require("../../services/merchant/kycServices");
 
+const {
+  getAllMerchantKycByFilter,
+} = require("../../services/merchant/kycServices");
 const {
   getAllMerchantByFilter,
   updateMerchantById,
@@ -27,7 +29,7 @@ exports.getMerchantKYCData = async (req, res) => {
 };
 
 exports.getAllMerchant = async (req, res) => {
-  const users = await getAllMerchantByFilter(
+  const merchants = await getAllMerchantByFilter(
     {},
     {
       merchant_type: 1,
@@ -41,19 +43,14 @@ exports.getAllMerchant = async (req, res) => {
       live_onboarding_enabled: 1,
       is_blocked: 1,
       createdAt: 1,
-      user_api_setting_id: 1,
     },
     {
-      populate: {
-        path: "user_api_setting_id",
-        select: "test_ip live_ip test_api_key live_api_key",
-      },
       lean: true,
     }
   );
 
-  if (!users) {
-    throw new AppError(400, "Failed to get users");
+  if (!merchants) {
+    throw new AppError(400, "Failed to get merchants");
   }
 
   res.status(200).json({
@@ -90,18 +87,18 @@ exports.updateMerchantData = async (req, session) => {
   }
 
   // update api setting
-    let updateData = { $set: {} };
-    let arrayFilters = [];
+  let updateData = { $set: {} };
+  let arrayFilters = [];
 
   // update ips
   if (ips && ips.length) {
     ips.forEach((x, i) => {
-        const { mode, ip, status } = x;
-        const ipField = `${mode.toLowerCase()}_ip`;
+      const { mode, ip, status } = x;
+      const ipField = `${mode.toLowerCase()}_ip`;
 
       // array filters
-        arrayFilters.push({ [`elem${i}.ip_address`]: ip });
-        updateData.$set[`${ipField}.$[elem${i}].status`] = status;
+      arrayFilters.push({ [`elem${i}.ip_address`]: ip });
+      updateData.$set[`${ipField}.$[elem${i}].status`] = status;
     });
   }
 
@@ -129,6 +126,6 @@ exports.updateMerchantData = async (req, session) => {
       live_onboarding_enabled: updatedMerchantData.live_onboarding_enabled,
       is_blocked: updatedMerchantData.is_blocked,
       createdAt: updatedMerchantData.createdAt,
-    }
+    },
   };
-}
+};

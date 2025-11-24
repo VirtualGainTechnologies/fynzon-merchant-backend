@@ -117,11 +117,6 @@ const merchantSchema = new mongoose.Schema(
       ref: "wallet",
     },
 
-    user_api_setting_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "UserApiSetting",  
-    },
-
     last_login_ip: {
       type: String,
       default: "",
