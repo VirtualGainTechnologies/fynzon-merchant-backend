@@ -4,11 +4,14 @@ const { verifyOtp } = require("../../utils/verifyOtp");
 const {
   getMerchantByFilter,
   updateMerchantById,
-} = require("../../services/merchant/authService");
+} = require("../../services/merchant/authServices");
 const {
   updateMerchantKycByFilter,
   getMerchantKycByFilter,
-} = require("../../services/merchant/kycService");
+} = require("../../services/merchant/kycServices");
+const {
+  updateMerchantWalletByFilter,
+} = require("../../services/merchant/walletServices");
 
 // upadte mobile number
 exports.sendEmailOtpForMobileChange = async (req, res) => {
@@ -264,7 +267,7 @@ exports.sendEmailOtpForEmailChange = async (req, res) => {
   });
 };
 
-exports.changeEmailId = async (req, res) => {
+exports.changeEmailId = async (req, session) => {
   const req_body = { ...req.body };
 
   // verify otp
@@ -273,37 +276,61 @@ exports.changeEmailId = async (req, res) => {
     throw new AppError(400, verifiedOtp.message);
   }
 
-  // upadte email
+  // upadte merchant
   const updatedMerchant = await updateMerchantById(
     req.merchantId,
     {
       email: req_body.email,
     },
-    { new: true }
+    { new: true, session }
   );
 
   if (!updatedMerchant) {
     throw new AppError(400, "Failed to update email");
   }
 
-  const response = {
-    merchantType: updatedMerchant.merchant_type,
-    businessName: updatedMerchant.business_name,
-    businessCategory: updatedMerchant.business_category,
-    fullName: updatedMerchant.full_name,
-    profession: updatedMerchant.profession,
-    email: updatedMerchant.email,
-    phoneCode: updatedMerchant.phone_code,
-    phone: updatedMerchant.phone,
-    kycStatus: req.kycStatus,
-    onboardingMode: updatedMerchant.onboarding_mode,
-  };
+  // update wallet
+  const updatedWallet = await updateMerchantWalletByFilter(
+    {
+      merchant_id: req.merchantId,
+    },
+    { email: req_body.email },
+    { new: true, session }
+  );
 
-  res.status(200).json({
+  if (!updatedWallet) {
+    throw new AppError(400, "Failed to update wallet");
+  }
+
+  // update kyc
+  const updatedKyc = await updateMerchantKycByFilter(
+    {
+      merchant_id: req.merchantId,
+    },
+    { email: req_body.email },
+    { new: true, session }
+  );
+
+  if (!updatedKyc) {
+    throw new AppError(400, "Failed to update Kyc");
+  }
+
+  return {
     message: "Email updated successfully",
     error: false,
-    data: response,
-  });
+    data: {
+      merchantType: updatedMerchant.merchant_type,
+      businessName: updatedMerchant.business_name,
+      businessCategory: updatedMerchant.business_category,
+      fullName: updatedMerchant.full_name,
+      profession: updatedMerchant.profession,
+      email: updatedMerchant.email,
+      phoneCode: updatedMerchant.phone_code,
+      phone: updatedMerchant.phone,
+      kycStatus: req.kycStatus,
+      onboardingMode: updatedMerchant.onboarding_mode,
+    },
+  };
 };
 
 // update password

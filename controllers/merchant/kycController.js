@@ -11,7 +11,7 @@ const {
 const {
   getMerchantKycByFilter,
   updateMerchantKycByFilter,
-} = require("../../services/merchant/kycService");
+} = require("../../services/merchant/kycServices");
 const { checkExpiry } = require("../../utils/dateHelper");
 const { getNthLastCharactersInArray } = require("../../utils/stringHelper");
 const {
@@ -1270,7 +1270,7 @@ exports.verifyBank = async (req, res, next) => {
       };
 
       const updatedKyc = await updateMerchantKycByFilter(
-        { user_id: req.userId },
+        { merchant_id: req.merchantId },
         updateObj,
         { new: true }
       );
