@@ -35,28 +35,10 @@ exports.sendForgotPasswordOtp = async (req, res) => {
 
 exports.verifyForgotPasswordOtp = async (req, res) => {
   const { otpId, otp } = req.body;
-
-  if (!otpId) {
-    throw new AppError(400, "otpId is required");
-  }
-
-  if (!otp || !/^\d{6}$/.test(otp)) {
-    throw new AppError(400, "OTP must be a 6-digit number");
-  }
-
-  if (!mongoose.isValidObjectId(otpId)) {
-    throw new AppError(
-      400,
-      "Invalid otpId format. Must be a 24-character hex string."
-    );
-  }
-
   const verifiedOtp = await verifyOtp(otpId, otp);
-
   if (verifiedOtp.error) {
     throw new AppError(400, verifiedOtp.message || "Invalid OTP");
   }
-
   res.status(200).json({
     message: "Verified successfully",
     error: false,
@@ -64,65 +46,44 @@ exports.verifyForgotPasswordOtp = async (req, res) => {
   });
 };
 
-exports.changePassword = async (req, session) => {
-  const req_body = Object.assign({}, req.body);
-
-  // get admin
-  const filter = {
-    ...(req_body.email && {
-      email: req_body.email,
-    }),
-  };
+exports.changePassword = async (req, res) => {
+  const { email, newPassword } = req.body;
 
   const admin = await getAdminByFilter(
-    filter,
+    { email },
     "email password login_count",
     {}
   );
 
   if (!admin) {
-    throw new AppError(400, "Provide either registered email or phone number");
+    throw new AppError(400, "Email is not registered");
   }
 
   // chekc same password is used or not
-  const isPasswordMatched = await admin.comparePassword(req_body.newPassword);
-
+  const isPasswordMatched = await admin.comparePassword(newPassword);
   if (isPasswordMatched) {
     throw new AppError(400, "This password is already in use");
   }
 
-  // change password
-  admin.password = req_body.newPassword;
-  const updatedPassword = await admin.save({ session });
-
-  if (!updatedPassword) {
-    throw new AppError(400, {
-      message: "Failed to change password",
-      error: true,
-      data: null,
-    });
-  }
-
   //update admin
   const updatedAdmin = await updateAdminByFilter(
-    { email: updatedPassword.email },
+    { email },
     {
+      password: await bcrypt.hash(newPassword, 12),
       is_blocked: false,
       login_count: 0,
       is_login_attempt_exceeded: false,
       last_login_ip: req.ipAddress,
       last_login_location: req.locationDetails,
     },
-    { new: true, session }
+    { new: true }
   );
-
   if (!updatedAdmin) {
     throw new AppError(400, "Error in updating details");
   }
-
-  return {
+  res.status(200).json({
     message: "Password changed successfully",
     error: false,
     data: null,
-  };
+  });
 };

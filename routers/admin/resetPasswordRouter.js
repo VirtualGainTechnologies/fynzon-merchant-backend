@@ -6,23 +6,13 @@ const {
   verifyForgotPasswordOtp,
   changePassword,
 } = require("../../controllers/admin/resetPasswordController");
-
 const {
   getIpAndLocation,
 } = require("../../middlewares/shared/ipLocationMiddleware");
-
-const { catchAsync, catchAsyncWithSession } = require("../../utils/catchAsync");
+const { catchAsync } = require("../../utils/catchAsync");
 
 const sendOtpValidator = [
-  body("mode")
-    .notEmpty()
-    .trim()
-    .withMessage("Please provide password change mode")
-    .isIn(["EMAIL"])
-    .withMessage("Mode must be EMAIL "),
-    
   body("email")
-    .if(body("mode").isIn(["EMAIL"]))
     .notEmpty()
     .withMessage("The field email id is required")
     .trim()
@@ -42,22 +32,13 @@ const verifyOtpValidator = [
 ];
 
 const changePasswordValidator = [
-  body("mode")
-    .notEmpty()
-    .trim()
-    .withMessage("Please provide password change mode")
-    .isIn(["EMAIL", "PHONE"])
-    .withMessage("Mode must be either EMAIL or PHONE"),
-    
   body("email")
-    .if(body("mode").isIn(["EMAIL"]))
     .notEmpty()
     .withMessage("The field email id is required")
     .trim()
     .isEmail()
     .withMessage("Invalid email id")
     .toLowerCase(),
-
   body("newPassword")
     .notEmpty()
     .trim()
@@ -80,7 +61,7 @@ router.post(
   "/forgot-password/change-password",
   changePasswordValidator,
   catchAsync("getIpAndLocation middleware", getIpAndLocation),
-  catchAsyncWithSession("changePassword api", changePassword)
+  catchAsync("changePassword api", changePassword)
 );
 
 module.exports = router;
