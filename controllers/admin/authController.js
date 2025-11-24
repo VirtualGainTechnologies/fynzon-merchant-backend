@@ -190,22 +190,23 @@ exports.upsertSubAdmin = async (req, res) => {
 // Send Admin Login OTP
 exports.sendAdminLoginOtp = async (req, res) => {
   const req_body = { ...req.body };
-  let sendOtp = req_body.email
-    ? await sendOtpToEmail({
-        email: req.admin.email,
-        type: "login",
-      })
-    : await sendOtpToMobile({
-        phoneCode: req.admin.phone_code,
-        phone: req.admin.phone,
-      });
+
+  if (!req_body.email) {
+    throw new AppError(400, "Email is required to send OTP");
+  }
+
+  // send OTP to email only
+  const sendOtp = await sendOtpToEmail({
+    email: req_body.email,
+    type: "login",
+  });
 
   if (sendOtp?.error) {
     throw new AppError(400, sendOtp.message || "Failed to send OTP");
   }
 
   res.status(200).json({
-    message: `OTP sent to ${req_body.phone ? "phone" : "email"}`,
+    message: "OTP sent to email",
     error: false,
     data: sendOtp?.data,
   });
@@ -278,8 +279,6 @@ exports.verifyAdminLoginOtp = async (req, res) => {
       role: updateAdminToken.role,
       userName: updateAdminToken.user_name,
       email: updateAdminToken.email,
-      phoneCode: updateAdminToken.phone_code,
-      phone: updateAdminToken.phone,
     },
   });
 };
