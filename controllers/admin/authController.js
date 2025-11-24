@@ -191,10 +191,6 @@ exports.upsertSubAdmin = async (req, res) => {
 exports.sendAdminLoginOtp = async (req, res) => {
   const req_body = { ...req.body };
 
-  if (!req_body.email) {
-    throw new AppError(400, "Email is required to send OTP");
-  }
-
   // send OTP to email only
   const sendOtp = await sendOtpToEmail({
     email: req_body.email,
@@ -222,25 +218,15 @@ exports.verifyAdminLoginOtp = async (req, res) => {
     throw new AppError(400, verifiedOtp.message || "Invalid OTP");
   }
 
-  const filter = {
-    ...(req_body.email && { email: req_body.email }),
-    ...(req_body.phoneCode && req_body.phone && { phone: req_body.phone }),
-  };
-
   // check the admin
   const admin = await getAdminByFilter(
-    filter,
+    { email: req_body.email },
     "-_id email phone_code phone role",
     { lean: true }
   );
 
   if (!admin) {
-    const message = filter?.email
-      ? "Email is not registered"
-      : filter.phone
-      ? "Phone number is not registered"
-      : "You are not registered";
-    throw new AppError(400, message);
+    throw new AppError(400, "Email is not registered");
   }
 
   const token = generateToken({ email: admin.email });
