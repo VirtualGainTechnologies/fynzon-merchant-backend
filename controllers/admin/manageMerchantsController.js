@@ -63,54 +63,24 @@ exports.getAllMerchant = async (req, res) => {
   });
 };
 
-exports.updateMerchantData = async (req, session) => {
-  const { merchantStatus, liveOnboardingEnabled, ips, apiKeys } = req.body;
-
-  // update Merchant data
+exports.updateMerchantData = async (req, res) => {
+  const { merchantStatus } = req.body;
   const updatedMerchantData = await updateMerchantById(
     new mongoose.Types.ObjectId(req.params?.merchantId),
     {
       ...(merchantStatus && {
         is_blocked: merchantStatus == "ACTIVE" ? false : true,
       }),
-      ...(liveOnboardingEnabled && {
-        live_onboarding_enabled: liveOnboardingEnabled,
-      }),
     },
     {
       new: true,
-      session,
     }
   );
   if (!updatedMerchantData) {
     throw new AppError(400, "Failed to update Merchnat data");
   }
 
-  // update api setting
-  let updateData = { $set: {} };
-  let arrayFilters = [];
-
-  // update ips
-  if (ips && ips.length) {
-    ips.forEach((x, i) => {
-      const { mode, ip, status } = x;
-      const ipField = `${mode.toLowerCase()}_ip`;
-
-      // array filters
-      arrayFilters.push({ [`elem${i}.ip_address`]: ip });
-      updateData.$set[`${ipField}.$[elem${i}].status`] = status;
-    });
-  }
-
-  // update API keys
-  if (apiKeys && apiKeys.length) {
-    apiKeys.forEach((x) => {
-      const { mode, status } = x;
-      updateData.$set[`${mode.toLowerCase()}_api_key.status`] = status;
-    });
-  }
-
-  return {
+  res.status(200).json({
     message: "Users data updated successfully",
     error: false,
     data: {
@@ -123,9 +93,8 @@ exports.updateMerchantData = async (req, session) => {
       profession: updatedMerchantData.profession,
       phone_code: updatedMerchantData.phone_code,
       phone: updatedMerchantData.phone,
-      live_onboarding_enabled: updatedMerchantData.live_onboarding_enabled,
       is_blocked: updatedMerchantData.is_blocked,
       createdAt: updatedMerchantData.createdAt,
     },
-  };
+  });
 };
