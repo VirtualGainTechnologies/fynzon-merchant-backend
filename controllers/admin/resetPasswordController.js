@@ -9,33 +9,19 @@ const { sendOtpToEmail } = require("../../utils/sendOtp");
 const { verifyOtp } = require("../../utils/verifyOtp");
 
 exports.sendForgotPasswordOtp = async (req, res) => {
-  const req_body = Object.assign({}, req.body);
-
+  const req_body = { ...req.body };
   // check admin
-  const filter = {
-    ...(req_body.email && {
-      email: req_body.email,
-    }),
-  };
-
-  const admin = await getAdminByFilter(filter, "email", {
+  const admin = await getAdminByFilter({ email: req_body.email }, "email", {
     lean: true,
   });
-
   if (!admin) {
-    throw new AppError(400, "This email is not registered");
+    throw new AppError(400, "Email is not registered");
   }
-
   // send otp
-  const payload = {
-    ...(req_body.email && {
-      type: "login",
-      email: req_body.email,
-    }),
-  };
-
-  const otpData = await sendOtpToEmail(payload);
-
+  const otpData = await sendOtpToEmail({
+    type: "reset password",
+    email: req_body.email,
+  });
   if (otpData.error) {
     throw new AppError(400, otpData.message);
   }
@@ -58,10 +44,13 @@ exports.verifyForgotPasswordOtp = async (req, res) => {
     throw new AppError(400, "OTP must be a 6-digit number");
   }
 
-   if (!mongoose.isValidObjectId(otpId)) {
-    throw new AppError(400, "Invalid otpId format. Must be a 24-character hex string.");
+  if (!mongoose.isValidObjectId(otpId)) {
+    throw new AppError(
+      400,
+      "Invalid otpId format. Must be a 24-character hex string."
+    );
   }
-  
+
   const verifiedOtp = await verifyOtp(otpId, otp);
 
   if (verifiedOtp.error) {

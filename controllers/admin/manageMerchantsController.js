@@ -54,11 +54,11 @@ exports.getAllMerchant = async (req, res) => {
   }
 
   res.status(200).json({
-    message: "Users data fetched successfully",
+    message: "Merchants data fetched successfully",
     error: false,
     data: {
-      totalRecords: users.length,
-      result: users,
+      totalRecords: merchants.length,
+      result: merchants,
     },
   });
 };
