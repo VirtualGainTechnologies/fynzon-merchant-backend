@@ -85,14 +85,7 @@ const superAdminRegistrationBodyValidator = [
 ];
 
 const adminLoginBodyValidator = [
-  body("mode")
-    .notEmpty()
-    .trim()
-    .withMessage("The field mode is required")
-    .isIn(["EMAIL", "PHONE"])
-    .withMessage("Login mode must be either EMAIL or PHONE"),
   body("email")
-    .if(body("mode").isIn(["EMAIL"]))
     .notEmpty()
     .withMessage("The field email is required")
     .trim()
@@ -100,27 +93,9 @@ const adminLoginBodyValidator = [
     .withMessage("Invalid email id")
     .toLowerCase(),
   body("password")
-    .if(body("mode").isIn(["EMAIL"]))
     .notEmpty()
     .trim()
     .withMessage("The field password is required"),
-  body("phoneCode")
-    .if(body("mode").isIn(["PHONE"]))
-    .notEmpty()
-    .trim()
-    .withMessage("The field phoneCode is required"),
-  body("phone")
-    .if(body("mode").isIn(["PHONE"]))
-    .notEmpty()
-    .trim()
-    .withMessage("The field phone is required")
-    .custom(async (val) => {
-      if (/^[6-9]{1}[0-9]{9}$/.test(val)) {
-        return true;
-      } else {
-        throw new Error("Invalid phone number");
-      }
-    }),
 ];
 
 const verifyOtpAfterAdminLoginBodyValidator = [

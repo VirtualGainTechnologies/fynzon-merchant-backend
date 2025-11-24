@@ -9,6 +9,7 @@ const kycSchema = new mongoose.Schema(
       ref: "merchant",
       required: [true, "merchant_id is required field"],
     },
+
     merchant_type: {
       type: String,
       trim: true,

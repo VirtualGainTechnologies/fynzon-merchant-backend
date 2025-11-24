@@ -74,6 +74,8 @@ app.use(useragent.express());
 //---------router imports---------//
 // admin-router-imports
 const adminAuthRouter = require("./routers/admin/authRouter");
+const adminResetPasswordRouter = require("./routers/admin/resetPasswordRouter");
+const manageMerchantsRouter = require("./routers/admin/manageMerchantsRouter");
 
 // merchant-router-imports
 const merchantAuthRouter = require("./routers/merchant/authRouter");
@@ -86,6 +88,8 @@ const resendOtpRouter = require("./routers/shared/resendOtpRouter");
 //---------routers declartions-----------//
 // admin-routers
 app.use("/admin/auth/api/v1", adminAuthRouter);
+app.use("/admin/password/api/v1", adminResetPasswordRouter);
+app.use("/admin/manage-merchants/api/v1", manageMerchantsRouter);
 
 // merchant-routers
 app.use("/auth/api/v1", merchantAuthRouter);
