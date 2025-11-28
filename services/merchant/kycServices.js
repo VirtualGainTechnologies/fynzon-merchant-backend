@@ -16,7 +16,6 @@ exports.getMerchantKycByFilter = (
   return MerchantKycModel.findOne(filters, projections, options);
 };
 
-
 exports.updateMerchantKycById = (id, updateObject, options = {}) => {
   return MerchantKycModel.findByIdAndUpdate(id, updateObject, options);
 };
@@ -37,8 +36,23 @@ exports.updateAllMerchantKycByFilter = (
   return MerchantKycModel.updateMany(filters, updateObject, options);
 };
 
-exports.getAllMerchantKycByFilter = () => {
+exports.getAllMerchantKycByFilter = (options) => {
+  const { email, businessName, fullName, page, limit } = options;
+  const filter = {
+    ...(email && {
+      email: { $regex: email, $options: "i" },
+    }),
+    ...(businessName && {
+      business_name: { $regex: businessName, $options: "i" },
+    }),
+    ...(email && {
+      full_name: { $regex: fullName, $options: "i" },
+    }),
+  };
   return MerchantKycModel.aggregate([
+    {
+      $match: filter,
+    },
     {
       $lookup: {
         from: "merchant",
