@@ -18,12 +18,13 @@ exports.getMerchantKYCData = async (req, res) => {
   if (!kycData) {
     throw new AppError(400, "Failed to get users KYC data");
   }
+  const [{ data, totalRecords }] = kycData;
   res.status(200).json({
     message: "Users KYC data fetched successfully",
     error: false,
     data: {
-      totalRecords: kycData.length,
-      result: kycData,
+      totalRecords: totalRecords[0]?.count,
+      result: data,
     },
   });
 };
