@@ -6,6 +6,7 @@ const {
 const {
   getAllMerchantByFilter,
   updateMerchantById,
+  getAllMerchantDetails,
 } = require("../../services/merchant/authServices");
 const AppError = require("../../utils/AppError");
 
@@ -30,36 +31,17 @@ exports.getMerchantKYCData = async (req, res) => {
 };
 
 exports.getAllMerchant = async (req, res) => {
-  const merchants = await getAllMerchantByFilter(
-    {},
-    {
-      merchant_type: 1,
-      email: 1,
-      business_name: 1,
-      business_category: 1,
-      full_name: 1,
-      profession: 1,
-      phone_code: 1,
-      phone: 1,
-      live_onboarding_enabled: 1,
-      is_blocked: 1,
-      createdAt: 1,
-    },
-    {
-      lean: true,
-    }
-  );
-
-  if (!merchants) {
+  const response = await getAllMerchantDetails(req.query);
+  if (!response) {
     throw new AppError(400, "Failed to get merchants");
   }
-
+  const [{ data, totalRecords }] = response;
   res.status(200).json({
     message: "Merchants data fetched successfully",
     error: false,
     data: {
-      totalRecords: merchants.length,
-      result: merchants,
+      totalRecords,
+      result: data,
     },
   });
 };

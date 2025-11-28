@@ -327,17 +327,11 @@ exports.getAllMerchantKycByFilter = (options) => {
 };
 
 exports.getAllMerchantKycByFilter = (options) => {
-  const { email, businessName, fullName, page = 0, limit = 10 } = options;
+  const { email, page = 0, limit = 10 } = options;
 
   const filter = {
     ...(email && {
       email: { $regex: email, $options: "i" },
-    }),
-    ...(businessName && {
-      business_name: { $regex: businessName, $options: "i" },
-    }),
-    ...(fullName && {
-      full_name: { $regex: fullName, $options: "i" },
     }),
   };
 

@@ -14,7 +14,11 @@ exports.getMerchantById = (id, projections = null, options = {}) => {
   return MerchantModel.findById(id, projections, options);
 };
 
-exports.getMerchantByFilter = (filters = {}, projections = null, options = {}) => {
+exports.getMerchantByFilter = (
+  filters = {},
+  projections = null,
+  options = {}
+) => {
   return MerchantModel.findOne(filters, projections, options);
 };
 
@@ -154,4 +158,48 @@ exports.registerMerchant = async (req_body, session) => {
       data: null,
     };
   }
+};
+
+exports.getAllMerchantDetails = (options) => {
+  const { email, businessName, fullName, page = 0, limit = 10 } = options;
+
+  const filter = {
+    ...(email && {
+      email: { $regex: email, $options: "i" },
+    }),
+    ...(businessName && {
+      business_name: { $regex: businessName, $options: "i" },
+    }),
+    ...(fullName && {
+      full_name: { $regex: fullName, $options: "i" },
+    }),
+  };
+
+  return MerchantModel.aggregate([
+    { $match: filter },
+    {
+      $facet: {
+        data: [
+          { $skip: page * Number(limit) },
+          { $limit: Number(limit) },
+          {
+            $project: {
+              merchant_type: 1,
+              email: 1,
+              business_name: 1,
+              business_category: 1,
+              full_name: 1,
+              profession: 1,
+              phone_code: 1,
+              phone: 1,
+              live_onboarding_enabled: 1,
+              is_blocked: 1,
+              createdAt: 1,
+            },
+          },
+        ],
+        totalRecords: [{ $count: "count" }],
+      },
+    },
+  ]).allowDiskUse(true);
 };

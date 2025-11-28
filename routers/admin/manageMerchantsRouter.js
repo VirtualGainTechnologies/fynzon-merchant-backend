@@ -27,6 +27,25 @@ const getMerchantKYCDataQueryValidator = [
     .withMessage("Email must be a string")
     .trim(),
 
+  query("page")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("Page must be a number and >= 0")
+    .toInt(),
+
+  query("limit")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("Limit must be a number and >= 1")
+    .toInt(),
+];
+const getAllMerchantQueryValidator = [
+  query("email")
+    .optional()
+    .isString()
+    .withMessage("Email must be a string")
+    .trim(),
+
   query("businessName")
     .optional()
     .isString()
@@ -61,6 +80,7 @@ router.get(
 
 router.get(
   "/merchants",
+  getAllMerchantQueryValidator,
   catchAsync("verifyAdminToken middleware", verifyAdminToken),
   catchAsync("getAllMerchant api", getAllMerchant)
 );
