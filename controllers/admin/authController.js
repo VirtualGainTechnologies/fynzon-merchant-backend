@@ -350,12 +350,18 @@ exports.getAdminProfile = async (req, res) => {
 
 // Retrieve a list of all sub-admins
 exports.getAllSubAdmins = async (req, res, next) => {
+  const { email, role } = req.query;
   if (req.role !== "SUPER-ADMIN") {
     throw new AppError(400, "Access Denied");
   }
 
   const result = await getAllAdminByFilter(
-    { role: { $ne: "SUPER-ADMIN" } },
+    {
+      role: role == "ALL" ? { $ne: "SUPER-ADMIN" } : role,
+      ...(email && {
+        email: { $regex: email, $options: "i" },
+      }),
+    },
     "_id user_name email phone_code phone role status createdAt",
     { lean: true }
   );
