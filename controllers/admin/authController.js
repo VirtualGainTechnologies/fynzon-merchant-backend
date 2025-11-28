@@ -350,7 +350,7 @@ exports.getAdminProfile = async (req, res) => {
 
 // Retrieve a list of all sub-admins
 exports.getAllSubAdmins = async (req, res, next) => {
-  const { email, role } = req.query;
+  const { email, role, page = 0, limit = 10 } = req.query;
   if (req.role !== "SUPER-ADMIN") {
     throw new AppError(400, "Access Denied");
   }
@@ -364,7 +364,9 @@ exports.getAllSubAdmins = async (req, res, next) => {
     },
     "_id user_name email phone_code phone role status createdAt",
     { lean: true }
-  );
+  )
+    .skip(page * limit)
+    .limit(limit * 1);
 
   if (!result || result.length <= 0) {
     throw new AppError(400, "No records found");

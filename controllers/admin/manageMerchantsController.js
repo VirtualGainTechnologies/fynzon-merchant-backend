@@ -10,6 +10,8 @@ const {
 const AppError = require("../../utils/AppError");
 
 exports.getMerchantKYCData = async (req, res) => {
+  const { email, businessName, fullName } = req.query;
+  
   if (req.role !== "SUPER-ADMIN") {
     throw new AppError(400, "Access Denied");
   }
