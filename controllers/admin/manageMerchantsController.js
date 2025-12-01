@@ -35,12 +35,17 @@ exports.getAllMerchant = async (req, res) => {
   if (!response) {
     throw new AppError(400, "Failed to get merchants");
   }
-  const [{ data, totalRecords }] = response;
+  const [
+    {
+      data,
+      totalRecords,
+    },
+  ] = response;
   res.status(200).json({
     message: "Merchants data fetched successfully",
     error: false,
     data: {
-      totalRecords,
+      totalRecords:totalRecords[0].count,
       result: data,
     },
   });
