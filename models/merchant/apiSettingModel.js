@@ -3,10 +3,10 @@ const validator = require("validator");
 
 const MerchantApiSettingSchema = new mongoose.Schema(
   {
-    Merchant_id: {
+    merchant_id: {
       type: mongoose.Schema.Types.ObjectId,
       trim: true,
-      refer: "Merchant",
+      ref: "merchants",
       required: [true, "Merchant_id is required field"],
     },
     email: {

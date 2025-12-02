@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-const bcrypt = require("bcryptjs"); 
-=======
 const bcrypt = require("bcryptjs");
->>>>>>> 3026aa9e803d2a15d4b5071e322ad99d62f4684b
 
 const {
   getAdminByFilter,

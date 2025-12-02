@@ -51,6 +51,15 @@ exports.sendOtpToEmail = async (emailData) => {
       case "update password":
         subject = `Fynzon-OTP is ${otp} for updating password`;
         break;
+      case "add ip_address":
+        subject = `OTP is ${otp} for adding IP address`;
+        break;
+      case "update-ip":
+        subject = `OTP ${otp} for updating IP address`;
+        break;
+      case "remove-ip":
+        subject = `OTP ${otp} for deleting IP address`;
+        break;
       default:
         throw new AppError(400, "Invalid email type");
     }

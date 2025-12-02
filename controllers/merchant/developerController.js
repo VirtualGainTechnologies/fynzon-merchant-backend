@@ -7,19 +7,17 @@ const { generateUniqueId } = require("../../utils/generateUniqueId");
 const { sendOtpToEmail } = require("../../utils/sendOtp");
 const { verifyOtp } = require("../../utils/verifyOtp");
 
-//api-key
+// api-key
 exports.generateApiKey = async (req, res) => {
   const { mode, websiteURL } = req.body;
-
   if (req.kycStatus !== "VERIFIED") {
     throw new AppError(400, "KYC status is not verified");
   }
-
   const keyType = `${mode.toLowerCase()}_api_key`;
 
   // check if API keys exist
   const apiKeys = await getApiSettingByFilter(
-    { Merchant_id: req.MerchantId },
+    { merchant_id: req.merchantId },
     `_id ${keyType}`,
     { lean: true }
   );
@@ -43,11 +41,11 @@ exports.generateApiKey = async (req, res) => {
     },
   };
 
- const updatedKeys = await updateApiSettingByFilter(
-  { Merchant_id: req.MerchantId },
-  updateObj,
-  { new: true, upsert: true }
-);
+  const updatedKeys = await updateApiSettingByFilter(
+    { merchant_id: req.merchantId },
+    updateObj,
+    { new: true, upsert: true }
+  );
 
   if (!updatedKeys) {
     throw new AppError(400, "Failed to generate API Key");
@@ -68,7 +66,7 @@ exports.generateApiKey = async (req, res) => {
 };
 
 exports.deleteApiKey = async (req, res) => {
-  const req_body = Object.assign({}, req.body);
+  const req_body = { ...req.body };
 
   // check api_key exist or not
   const filter =
@@ -91,7 +89,7 @@ exports.deleteApiKey = async (req, res) => {
       : { $unset: { live_api_key: 1 } };
 
   const deletedApiKey = await updateApiSettingByFilter(
-    { Merchant_id: req.MerchantId },
+    { merchant_id: req.merchantId },
     deleteObj,
     { new: true }
   );
@@ -114,18 +112,18 @@ exports.deleteApiKey = async (req, res) => {
   });
 };
 
-//add ip-address
+// add ip-address
 exports.sendOtpToAddIp = async (req, res) => {
   const { ipAddress, mode } = req.body;
 
-  //check kyc is verified or not
+  // check kyc is verified or not
   if (req.kycStatus !== "VERIFIED") {
     throw new AppError(400, "KYC status is not verified");
   }
 
-  //chekc api key for that mode exists or not
+  // chekc api key for that mode exists or not
   const developerInfo = await getApiSettingByFilter(
-    { Merchant_id: req.MerchantId },
+    { merchant_id: req.merchantId },
     "_id test_ip live_ip live_api_key test_api_key",
     { lean: true }
   );
@@ -169,16 +167,16 @@ exports.sendOtpToAddIp = async (req, res) => {
     });
 
   // send otp
- const result = await sendOtpToEmail({
-  type: "login",
-  email: req.email,
-});
+  const result = await sendOtpToEmail({
+    type: "add ip_address",
+    email: req.email,
+  });
 
-if (!result || result.error || !result.data) {
-  throw new AppError(400, result?.message || "Failed to send OTP");
-}
+  if (!result || result.error || !result.data) {
+    throw new AppError(400, result?.message || "Failed to send OTP");
+  }
 
-const { otpId, email } = result.data;
+  const { otpId, email } = result.data;
 
   res.status(200).json({
     message: `OTP sent to email`,
@@ -197,13 +195,12 @@ exports.verifyOtpToAddIp = async (req, res) => {
 
   // verify otp
   const verifyOTP = await verifyOtp(otpId, otp);
-
   if (verifyOTP.error) {
     throw new AppError(400, verifyOTP.message);
   }
 
   const developerInfo = await getApiSettingByFilter(
-    { Merchant_id: req.MerchantId },
+    { merchant_id: req.merchantId },
     "_id test_ip live_ip live_api_key test_api_key",
     { lean: true }
   );
@@ -243,7 +240,7 @@ exports.verifyOtpToAddIp = async (req, res) => {
   });
 
   const updatedIpAllowlist = await updateApiSettingByFilter(
-    { Merchant_id: req.MerchantId },
+    { merchant_id: req.merchantId },
     { $push: { [`${mode.toLowerCase()}_ip`]: { $each: requestedIps } } },
     { new: true }
   );
@@ -301,16 +298,16 @@ exports.sendOtpToUpdateIp = async (req, res) => {
   }
 
   // send otp
-const result = await sendOtpToEmail({
-  type: "login",
-  email: req.email,
-});
+  const result = await sendOtpToEmail({
+    type: "update-ip",
+    email: req.email,
+  });
 
-if (!result || result.error || !result.data) {
-  throw new AppError(400, result?.message || "Failed to send OTP");
-}
+  if (!result || result.error || !result.data) {
+    throw new AppError(400, result?.message || "Failed to send OTP");
+  }
 
-const { otpId, email } = result.data;
+  const { otpId, email } = result.data;
   res.status(200).json({
     message: `OTP sent to email`,
     error: false,
@@ -395,7 +392,7 @@ exports.verifyOtpToUpdateIp = async (req, res) => {
   });
 };
 
-//delete ip-address
+// delete ip-address
 exports.sendOtpToRemoveIp = async (req, res) => {
   const { mode, ipAddress } = req.body;
 
@@ -421,7 +418,7 @@ exports.sendOtpToRemoveIp = async (req, res) => {
     error,
     data: { otpId, email },
   } = await sendOtpToEmail({
-    type: "login",
+    type: "remove-ip",
     email: req.email,
   });
 
@@ -446,13 +443,12 @@ exports.verifyOtpToRemoveIp = async (req, res) => {
 
   // verify otp
   const verifyOTP = await verifyOtp(otpId, otp);
-
   if (verifyOTP.error) {
     throw new AppError(400, verifyOTP.message);
   }
 
   const deletedIp = await updateApiSettingByFilter(
-    { Merchant_id: req.MerchantId },
+    { merchant_id: req.merchantId },
     {
       $pull: {
         [`${mode.toLowerCase()}_ip`]: { ip_address: ipAddress },
@@ -479,18 +475,18 @@ exports.verifyOtpToRemoveIp = async (req, res) => {
   });
 };
 
-//add webhook
+// add webhook
 exports.addWebHookUrl = async (req, res) => {
   const { url, mode, event } = req.body;
 
-  //check kys is verified or not
+  // check kys is verified or not
   if (req.kycStatus !== "VERIFIED") {
     throw new AppError(400, "KYC status is not verified");
   }
 
-  //chekc api key and ip address already exists or not
+  // check api key and ip address already exists or not
   const developerInfo = await getApiSettingByFilter(
-    { Merchant_id: req.MerchantId },
+    { merchant_id: req.merchantId },
     "_id test_ip live_ip live_api_key test_api_key",
     { lean: true }
   );
@@ -506,9 +502,7 @@ exports.addWebHookUrl = async (req, res) => {
   if (!developerInfo[`${mode.toLowerCase()}_ip`].length) {
     throw new AppError(400, `First add ${mode.toLowerCase()} IP address`);
   }
-
   const webhookType = `${mode.toLowerCase()}_webhook_url`;
-
   const isUrlExist = await getApiSettingByFilter(
     {
       [webhookType]: {
@@ -531,7 +525,7 @@ exports.addWebHookUrl = async (req, res) => {
   }
 
   const updateUrl = await updateApiSettingByFilter(
-    { Merchant_id: req.MerchantId },
+    { merchant_id: req.merchantId },
     {
       $push: {
         [webhookType]: {
@@ -562,18 +556,18 @@ exports.addWebHookUrl = async (req, res) => {
   });
 };
 
-//update webhook
+// update webhook
 exports.updateWebHookURL = async (req, res) => {
   const { url, oldUrl, mode, event } = req.body;
 
-  //check kyc is verified or not
+  // check kyc is verified or not
   if (req.kycStatus !== "VERIFIED") {
     throw new AppError(400, "KYC status is not verified");
   }
 
   const webhookType = `${mode.toLowerCase()}_webhook_url`;
 
-  //check old url exists or not
+  // check old url exists or not
   const filter = {
     [webhookType]: {
       $elemMatch: {
@@ -586,12 +580,11 @@ exports.updateWebHookURL = async (req, res) => {
   const isOldURLExist = await getApiSettingByFilter(filter, "_id", {
     lean: true,
   });
-
   if (!isOldURLExist) {
     throw new AppError(404, "Old URL does not exist");
   }
 
-  //chekc new url already exists or not
+  // chekc new url already exists or not
   const isNewURLExist = await getApiSettingByFilter(
     {
       [webhookType]: {
@@ -614,7 +607,7 @@ exports.updateWebHookURL = async (req, res) => {
     );
   }
 
-  //update new url
+  // update new url
   const updatedURL = await updateApiSettingByFilter(
     filter,
     {
@@ -645,7 +638,7 @@ exports.updateWebHookURL = async (req, res) => {
   });
 };
 
-//delete webhook
+// delete webhook
 exports.removeWebHookUrl = async (req, res) => {
   const { url, mode, event } = req.body;
 
@@ -656,7 +649,7 @@ exports.removeWebHookUrl = async (req, res) => {
 
   const webhookType = `${mode.toLowerCase()}_webhook_url`;
 
-  //check url exists or not
+  // check url exists or not
   const isUrlExist = await getApiSettingByFilter(
     {
       [webhookType]: {
@@ -676,7 +669,7 @@ exports.removeWebHookUrl = async (req, res) => {
     throw new AppError(404, "URL does not exist");
   }
 
-  //remove url
+  // remove url
   const removeUrl = await updateApiSettingByFilter(
     { Merchant_id: req.MerchantId },
     {
@@ -708,15 +701,13 @@ exports.removeWebHookUrl = async (req, res) => {
   });
 };
 
-//developer data
+// developer data
 exports.getDeveloperData = async (req, res) => {
-  const [apiSettingInfo] = await Promise.all([
-    getApiSettingByFilter(
-      { Merchant_id: req.MerchantId },
-      "live_api_key test_api_key test_ip live_ip test_webhook_url live_webhook_url",
-      { lean: true }
-    ),
-  ]);
+  const apiSettingInfo = await getApiSettingByFilter(
+    { merchant_id: req.merchantId },
+    "live_api_key test_api_key test_ip live_ip test_webhook_url live_webhook_url",
+    { lean: true }
+  );
 
   if (!apiSettingInfo) {
     throw new AppError(400, "Failed to fetch api details");
