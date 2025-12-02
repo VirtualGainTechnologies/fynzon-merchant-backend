@@ -13,7 +13,7 @@ const globalErrorHandler = require("./middlewares/shared/globalErrorHandler");
 const { logger } = require("./utils/winstonLogger");
 
 require("dotenv").config();
-require("./utils/redisClient");
+// require("./utils/redisClient");
 // start express app
 const app = express();
 logger.info("Running environment is ===>", app.get("env"));
@@ -81,6 +81,7 @@ const manageMerchantsRouter = require("./routers/admin/manageMerchantsRouter");
 const merchantAuthRouter = require("./routers/merchant/authRouter");
 const merchantKycRouter = require("./routers/merchant/kycRouter");
 const accountRouter = require("./routers/merchant/accountRouter");
+const developerRouter = require("./routers/merchant/developerRouter");
 
 // shared-router-imports
 const resendOtpRouter = require("./routers/shared/resendOtpRouter");
@@ -95,6 +96,7 @@ app.use("/admin/manage-merchants/api/v1", manageMerchantsRouter);
 app.use("/auth/api/v1", merchantAuthRouter);
 app.use("/kyc/api/v1", merchantKycRouter);
 app.use("/account/api/v1", accountRouter);
+app.use("/developer/api/v1", developerRouter);
 
 // shared-routers
 app.use("/resend-otp/api/v1", resendOtpRouter);

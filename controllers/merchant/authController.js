@@ -131,7 +131,6 @@ exports.verifyRegistrationOtp = async (req, session) => {
     },
     kycStatus: "PENDING",
     onboardingMode: registerData.onboarding_mode,
-    liveOnboardingEnabled: registerData.live_onboarding_enabled,
   };
 
   const emailObject = {
@@ -247,7 +246,6 @@ exports.verifyLoginOtp = async (req, res) => {
     },
     kycStatus: kycData?.kyc_status,
     onboardingMode: updatedMerchant.onboarding_mode,
-    liveOnboardingEnabled: updatedMerchant.live_onboarding_enabled,
   };
 
   // set cookies

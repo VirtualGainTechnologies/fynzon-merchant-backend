@@ -8,6 +8,7 @@ const {
   updateAdminByFilter,
   getAllAdminByFilter,
   updateAdminById,
+  getAllSubAdminsByFilter,
 } = require("../../services/admin/authServices");
 const { sendOtpToEmail, sendOtpToMobile } = require("../../utils/sendOtp");
 const { verifyOtp } = require("../../utils/verifyOtp");
@@ -349,26 +350,22 @@ exports.getAdminProfile = async (req, res) => {
 };
 
 // Retrieve a list of all sub-admins
-exports.getAllSubAdmins = async (req, res, next) => {
+exports.getAllSubAdmins = async (req, res) => {
   if (req.role !== "SUPER-ADMIN") {
     throw new AppError(400, "Access Denied");
   }
 
-  const result = await getAllAdminByFilter(
-    { role: { $ne: "SUPER-ADMIN" } },
-    "_id user_name email phone_code phone role status createdAt",
-    { lean: true }
-  );
-
-  if (!result || result.length <= 0) {
-    throw new AppError(400, "No records found");
+  const response = await getAllSubAdminsByFilter(req.query);
+  if (!response) {
+    throw new AppError(400, "Failed to get admins");
   }
+  const { totalRecords, result } = response[0];
 
   res.status(200).json({
     message: "Sub-admins retrieved successfully",
     error: false,
     data: {
-      totalRecords: result.length,
+      totalRecords,
       result,
     },
   });
