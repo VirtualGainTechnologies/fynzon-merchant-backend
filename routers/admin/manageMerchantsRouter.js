@@ -18,8 +18,35 @@ const updateMerchantDataValidator = [
     .isString()
     .isIn(["ACTIVE", "BLOCKED"])
     .withMessage("Invalid merchant status"),
+  body("ips")
+    .optional()
+    .isArray()
+    .withMessage("The field ips must be an array"),
+  body("ips.*.mode")
+    .optional()
+    .isString()
+    .isIn(["TEST", "LIVE"])
+    .withMessage("Invalid IP mode"),
+  body("ips.*.status")
+    .optional()
+    .isString()
+    .isIn(["PENDING", "PROCESSING", "ACTIVE", "BLOCKED"])
+    .withMessage("Invalid IP status"),
+  body("apiKeys")
+    .optional()
+    .isArray()
+    .withMessage("The field apiKeys must be an array"),
+  body("apiKeys.*.mode")
+    .optional()
+    .isString()
+    .isIn(["TEST", "LIVE"])
+    .withMessage("Invalid API key mode"),
+  body("apiKeys.*.status")
+    .optional()
+    .isString()
+    .isIn(["PENDING", "PROCESSING", "ACTIVE", "BLOCKED"])
+    .withMessage("Invalid API key status"),
 ];
-
 const getMerchantKYCDataQueryValidator = [
   query("email")
     .optional()

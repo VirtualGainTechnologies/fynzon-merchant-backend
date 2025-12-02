@@ -9,6 +9,9 @@ const {
   getAllMerchantDetails,
 } = require("../../services/merchant/authServices");
 const AppError = require("../../utils/AppError");
+const {
+  updateApiSettingById,
+} = require("../../services/merchant/apiSettingService");
 
 exports.getMerchantKYCData = async (req, res) => {
   if (req.role !== "SUPER-ADMIN") {
@@ -35,24 +38,22 @@ exports.getAllMerchant = async (req, res) => {
   if (!response) {
     throw new AppError(400, "Failed to get merchants");
   }
-  const [
-    {
-      data,
-      totalRecords,
-    },
-  ] = response;
+  const [{ data, totalRecords }] = response;
   res.status(200).json({
     message: "Merchants data fetched successfully",
     error: false,
     data: {
-      totalRecords:totalRecords[0].count,
+      totalRecords: totalRecords[0].count,
       result: data,
     },
   });
 };
 
-exports.updateMerchantData = async (req, res) => {
-  const { merchantStatus } = req.body;
+
+exports.updateMerchantData = async (req, session) => {
+  const { merchantStatus, ips, apiKeys } = req.body;
+
+  // update user data
   const updatedMerchantData = await updateMerchantById(
     new mongoose.Types.ObjectId(req.params?.merchantId),
     {
@@ -62,14 +63,57 @@ exports.updateMerchantData = async (req, res) => {
     },
     {
       new: true,
+      session,
     }
   );
   if (!updatedMerchantData) {
-    throw new AppError(400, "Failed to update Merchnat data");
+    throw new AppError(400, "Failed to update merchant data");
   }
 
-  res.status(200).json({
-    message: "Users data updated successfully",
+  // update api setting
+  let updateData = {
+    $set: {},
+  };
+  let arrayFilters = [];
+
+  // update ips
+  if (ips && ips.length) {
+    ips.forEach((x, i) => {
+      const { mode, ip, status } = x;
+      const ipField = `${mode.toLowerCase()}_ip`;
+
+      // array filters
+      arrayFilters.push({
+        [`elem${i}.ip_address`]: ip,
+      });
+
+      updateData.$set[`${ipField}.$[elem${i}].status`] = status;
+    });
+  }
+
+  // update API keys
+  if (apiKeys && apiKeys.length) {
+    apiKeys.forEach((x) => {
+      const { mode, status } = x;
+      updateData.$set[`${mode.toLowerCase()}_api_key.status`] = status;
+    });
+  }
+
+  const updatedMerchantApiSetting = await updateApiSettingById(
+    updatedMerchantData.api_setting_id,
+    updateData,
+    {
+      new: true,
+      session,
+      runValidators: true,
+      ...(arrayFilters.length && { arrayFilters }),
+    }
+  );
+  if (!updatedMerchantApiSetting) {
+    throw new AppError(400, "Failed to update merchant api setting");
+  }
+  return {
+    message: "Merchant data updated successfully",
     error: false,
     data: {
       _id: updatedMerchantData._id,
@@ -83,6 +127,13 @@ exports.updateMerchantData = async (req, res) => {
       phone: updatedMerchantData.phone,
       is_blocked: updatedMerchantData.is_blocked,
       createdAt: updatedMerchantData.createdAt,
+      api_setting_id: {
+        _id: updatedMerchantApiSetting._id,
+        test_ip: updatedMerchantApiSetting.test_ip,
+        live_ip: updatedMerchantApiSetting.live_ip,
+        test_api_key: updatedMerchantApiSetting.test_api_key,
+        live_api_key: updatedMerchantApiSetting.live_api_key,
+      },
     },
-  });
+  };
 };

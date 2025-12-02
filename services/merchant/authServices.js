@@ -208,7 +208,6 @@ exports.getAllMerchantDetails = (options) => {
               profession: 1,
               phone_code: 1,
               phone: 1,
-              live_onboarding_enabled: 1,
               is_blocked: 1,
               createdAt: 1,
             },
