@@ -354,6 +354,8 @@ exports.getAllSubAdmins = async (req, res, next) => {
     throw new AppError(400, "Access Denied");
   }
 
+  //pagination , filter: role, email: debounce search
+
   const result = await getAllAdminByFilter(
     { role: { $ne: "SUPER-ADMIN" } },
     "_id user_name email phone_code phone role status createdAt",
