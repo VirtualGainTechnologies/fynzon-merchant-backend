@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { body } = require("express-validator");
+const { body, query } = require("express-validator");
 
 const {
   validateAdmin,
@@ -166,6 +166,19 @@ const upsertSubAdminBodyValidator = [
     .isMongoId()
     .withMessage("The filed userId must be a valid MongoDB ObjectId"),
 ];
+const getAllSubAdminsQueryValidator = [
+  query("role")
+    .notEmpty()
+    .withMessage("The field role is missing")
+    .isIn([
+      "SUB-ADMIN-LEVEL-1",
+      "SUB-ADMIN-LEVEL-2",
+      "SUB-ADMIN-LEVEL-3",
+      "ALL",
+    ])
+    .withMessage("Invalid role value"),
+  query("email").optional({ nullable: true, checkFalsy: true }).toLowerCase(),
+];
 
 // Register Super Admin
 router.post(
@@ -212,6 +225,7 @@ router.get(
 // Retrieve a list of all sub-admins
 router.get(
   "/get-all-sub-admins",
+  getAllSubAdminsQueryValidator,
   catchAsync("verifyAdminToken middleware", verifyAdminToken),
   catchAsync("getAllSubAdmins api", getAllSubAdmins)
 );

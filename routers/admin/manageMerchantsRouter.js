@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { body, param } = require("express-validator");
+const { body, param, query } = require("express-validator");
 
 const {
   getMerchantKYCData,
@@ -20,14 +20,67 @@ const updateMerchantDataValidator = [
     .withMessage("Invalid merchant status"),
 ];
 
+const getMerchantKYCDataQueryValidator = [
+  query("email")
+    .optional()
+    .isString()
+    .withMessage("Email must be a string")
+    .trim(),
+
+  query("page")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("Page must be a number and >= 0")
+    .toInt(),
+
+  query("limit")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("Limit must be a number and >= 1")
+    .toInt(),
+];
+const getAllMerchantQueryValidator = [
+  query("email")
+    .optional()
+    .isString()
+    .withMessage("Email must be a string")
+    .trim(),
+
+  query("businessName")
+    .optional()
+    .isString()
+    .withMessage("Business Name must be a string")
+    .trim(),
+
+  query("fullName")
+    .optional()
+    .isString()
+    .withMessage("Full Name must be a string")
+    .trim(),
+
+  query("page")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("Page must be a number and >= 0")
+    .toInt(),
+
+  query("limit")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("Limit must be a number and >= 1")
+    .toInt(),
+];
+
 router.get(
   "/kycs",
+  getMerchantKYCDataQueryValidator,
   catchAsync("verifyAdminToken middleware", verifyAdminToken),
   catchAsync("getMerchnatKYCData api", getMerchantKYCData)
 );
 
 router.get(
   "/merchants",
+  getAllMerchantQueryValidator,
   catchAsync("verifyAdminToken middleware", verifyAdminToken),
   catchAsync("getAllMerchant api", getAllMerchant)
 );
