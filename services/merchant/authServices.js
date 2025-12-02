@@ -1,3 +1,6 @@
+const {
+  MerchantApiSettingModel,
+} = require("../../models/merchant/apisettingmodel");
 const { MerchantKycModel } = require("../../models/merchant/kycModel");
 const { MerchantModel } = require("../../models/merchant/merchantModel");
 const { MerchantWalletModel } = require("../../models/merchant/walletModel");
@@ -14,7 +17,11 @@ exports.getMerchantById = (id, projections = null, options = {}) => {
   return MerchantModel.findById(id, projections, options);
 };
 
-exports.getMerchantByFilter = (filters = {}, projections = null, options = {}) => {
+exports.getMerchantByFilter = (
+  filters = {},
+  projections = null,
+  options = {}
+) => {
   return MerchantModel.findOne(filters, projections, options);
 };
 
@@ -121,15 +128,28 @@ exports.registerMerchant = async (req_body, session) => {
       email: merchantInstance.email,
     });
 
-    //update user instance
+    // create merchant developer instance
+    const merchantApiSettingInstance = new MerchantApiSettingModel({
+      merchant_id: merchantInstance._id,
+      email: merchantInstance.email,
+    });
+
+    // update merchant instance
     merchantInstance.kyc_id = kycInstance._id;
     merchantInstance.wallet_id = walletInstance._id;
+    merchantInstance.api_setting_id = merchantApiSettingInstance._id;
 
     // save all documents
     const merchantRes = await merchantInstance.save({ session });
     const kycRes = await kycInstance.save({ session });
     const walletRes = await walletInstance.save({ session });
+    const apiSettingInstance = await merchantApiSettingInstance.save({
+      session,
+    });
 
+    if (!apiSettingInstance) {
+      throw new AppError(400, "Error in creating merchant developer");
+    }
     if (!merchantRes) {
       throw new AppError(400, "Error in creating merchant");
     }
@@ -154,4 +174,47 @@ exports.registerMerchant = async (req_body, session) => {
       data: null,
     };
   }
+};
+
+exports.getAllMerchantDetails = (options) => {
+  const { email, businessName, fullName, page = 0, limit = 10 } = options;
+
+  const filter = {
+    ...(email && {
+      email: { $regex: email, $options: "i" },
+    }),
+    ...(businessName && {
+      business_name: { $regex: businessName, $options: "i" },
+    }),
+    ...(fullName && {
+      full_name: { $regex: fullName, $options: "i" },
+    }),
+  };
+
+  return MerchantModel.aggregate([
+    { $match: filter },
+    {
+      $facet: {
+        data: [
+          { $skip: page * Number(limit) },
+          { $limit: Number(limit) },
+          {
+            $project: {
+              merchant_type: 1,
+              email: 1,
+              business_name: 1,
+              business_category: 1,
+              full_name: 1,
+              profession: 1,
+              phone_code: 1,
+              phone: 1,
+              is_blocked: 1,
+              createdAt: 1,
+            },
+          },
+        ],
+        totalRecords: [{ $count: "count" }],
+      },
+    },
+  ]).allowDiskUse(true);
 };

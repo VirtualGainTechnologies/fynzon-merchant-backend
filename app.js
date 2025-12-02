@@ -13,7 +13,7 @@ const globalErrorHandler = require("./middlewares/shared/globalErrorHandler");
 const { logger } = require("./utils/winstonLogger");
 
 require("dotenv").config();
-require("./utils/redisClient");
+// require("./utils/redisClient");
 // start express app
 const app = express();
 logger.info("Running environment is ===>", app.get("env"));
@@ -73,12 +73,15 @@ app.use(useragent.express());
 // app.use(xss());
 //---------router imports---------//
 // admin-router-imports
-const adminAuthRouter = require("./routers/admin/adminAuthRouter");
+const adminAuthRouter = require("./routers/admin/authRouter");
+const adminResetPasswordRouter = require("./routers/admin/resetPasswordRouter");
+const manageMerchantsRouter = require("./routers/admin/manageMerchantsRouter");
 
 // merchant-router-imports
 const merchantAuthRouter = require("./routers/merchant/authRouter");
 const merchantKycRouter = require("./routers/merchant/kycRouter");
 const accountRouter = require("./routers/merchant/accountRouter");
+const developerRouter = require("./routers/merchant/developerRouter");
 
 // shared-router-imports
 const resendOtpRouter = require("./routers/shared/resendOtpRouter");
@@ -86,11 +89,14 @@ const resendOtpRouter = require("./routers/shared/resendOtpRouter");
 //---------routers declartions-----------//
 // admin-routers
 app.use("/admin/auth/api/v1", adminAuthRouter);
+app.use("/admin/password/api/v1", adminResetPasswordRouter);
+app.use("/admin/manage-merchants/api/v1", manageMerchantsRouter);
 
 // merchant-routers
 app.use("/auth/api/v1", merchantAuthRouter);
 app.use("/kyc/api/v1", merchantKycRouter);
 app.use("/account/api/v1", accountRouter);
+app.use("/developer/api/v1", developerRouter);
 
 // shared-routers
 app.use("/resend-otp/api/v1", resendOtpRouter);

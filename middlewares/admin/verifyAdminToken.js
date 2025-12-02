@@ -1,5 +1,5 @@
 const AppError = require("../../utils/AppError");
-const { getAdminByFilter } = require("../../services/admin/adminAuthServices");
+const { getAdminByFilter } = require("../../services/admin/authServices");
 const { verifyJwtToken } = require("../../utils/verifyJwtToken");
 
 exports.verifyAdminToken = async (req, res, next) => {
@@ -17,7 +17,7 @@ exports.verifyAdminToken = async (req, res, next) => {
   }
 
   const adminResult = await getAdminByFilter(
-    {token }, 
+    { token },
     "_id email role status",
     {
       lean: true,

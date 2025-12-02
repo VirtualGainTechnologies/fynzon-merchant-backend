@@ -2,33 +2,18 @@ const { xDownloadOptions } = require("helmet");
 const {
   getAdminByFilter,
   updateAdminById,
-} = require("../../services/admin/adminAuthServices");
+} = require("../../services/admin/authServices");
 const AppError = require("../../utils/AppError");
 
 exports.checkAdminLoginAttempts = async (req, res, next) => {
-  //check admin exists or not
-  const filter = {
-    ...(req.body?.email && {
-      email: req.body?.email,
-    }),
-    ...(req.body?.phone && {
-      phone_code: req.body?.phoneCode,
-      phone: req.body?.phone,
-    }),
-  }; 
-
   // check admin exists or not
   const admin = await getAdminByFilter(
-    filter,
+    { email: req.body?.email },
     "_id email phone phone_code is_login_attempt_exceeded login_count password status",
     {}
   );
-
   if (!admin) {
-    throw new AppError(
-      400,
-      `${filter.email ? "Email" : "Phone number"} is not registered`
-    );
+    throw new AppError(400, "Email is not registered");
   }
 
   if (admin.status === "BLOCKED") {
@@ -52,29 +37,27 @@ exports.checkAdminLoginAttempts = async (req, res, next) => {
     });
   }
 
-  if (req.body.email) {
-    // match the password
-    const isPasswordMatched = await admin.comparePassword(req.body.password);
-    if (!isPasswordMatched) {
-      // increase the login count
-      await admin.incrementLoginCount();
+  // match the password
+  const isPasswordMatched = await admin.comparePassword(req.body.password);
+  if (!isPasswordMatched) {
+    // increase the login count
+    await admin.incrementLoginCount();
 
-      // check login attempt
-      if (admin.login_count >= 5) {
-        // block the user
-        const updatedAdmin = await updateAdminById(
-          admin._id,
-          { is_login_attempt_exceeded: true },
-          { new: true }
-        );
+    // check login attempt
+    if (admin.login_count >= 5) {
+      // block the user
+      const updatedAdmin = await updateAdminById(
+        admin._id,
+        { is_login_attempt_exceeded: true },
+        { new: true }
+      );
 
-        if (!updatedAdmin) {
-          throw new AppError(400, "Error in updating the admin");
-        }
+      if (!updatedAdmin) {
+        throw new AppError(400, "Error in updating the admin");
       }
-
-      throw new AppError(400, "Incorrect password");
     }
+
+    throw new AppError(400, "Incorrect password");
   }
 
   //update login ip, location and date
@@ -91,33 +74,6 @@ exports.checkAdminLoginAttempts = async (req, res, next) => {
   if (!updatedUser) {
     throw new AppError(400, "Error in updating details");
   }
-
-  if (req.body?.password) {
-    //match the password
-    const isPasswordMatched = await admin.comparePassword(req.body.password);
-
-    if (!isPasswordMatched) {
-      //increase the login count
-      await admin.incrementLoginCount();
-
-      //check login attempt
-      if (admin.login_count >= 5) {
-        //block the user
-        const updatedUser = await updateAdminById(
-          admin._id,
-          { is_login_attempt_exceeded: true },
-          { new: true }
-        );
-
-        if (!updatedUser) {
-          throw new AppError(400, "Error in updating");
-        }
-      }
-
-      throw new AppError(400, "Incorrect password");
-    }
-  }
-
   req.admin = admin;
 
   next();
