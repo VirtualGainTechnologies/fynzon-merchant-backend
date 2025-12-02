@@ -126,7 +126,7 @@ const verifyLoginOtpValidator = [
   body("otp")
     .trim()
     .notEmpty()
-    .withMessage("The field otpID is required")
+    .withMessage("The field otp is required")
     .isLength({ min: 6, max: 6 })
     .withMessage("OTP must be of 6 digit"),
   body("email")
@@ -153,7 +153,7 @@ const verifyForgotPasswordOtpValidator = [
   body("otp")
     .trim()
     .notEmpty()
-    .withMessage("The field otpID is required")
+    .withMessage("The field otp is required")
     .isLength({ min: 6, max: 6 })
     .withMessage("OTP must be of 6 digit"),
 ];

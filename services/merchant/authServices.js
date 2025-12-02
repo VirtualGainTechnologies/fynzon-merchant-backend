@@ -1,3 +1,6 @@
+const {
+  MerchantApiSettingModel,
+} = require("../../models/merchant/apisettingmodel");
 const { MerchantKycModel } = require("../../models/merchant/kycModel");
 const { MerchantModel } = require("../../models/merchant/merchantModel");
 const { MerchantWalletModel } = require("../../models/merchant/walletModel");
@@ -125,15 +128,28 @@ exports.registerMerchant = async (req_body, session) => {
       email: merchantInstance.email,
     });
 
-    //update user instance
+    // create merchant developer instance
+    const merchantApiSettingInstance = new MerchantApiSettingModel({
+      merchant_id: merchantInstance._id,
+      email: merchantInstance.email,
+    });
+
+    // update merchant instance
     merchantInstance.kyc_id = kycInstance._id;
     merchantInstance.wallet_id = walletInstance._id;
+    merchantInstance.api_setting_id = merchantApiSettingInstance._id;
 
     // save all documents
     const merchantRes = await merchantInstance.save({ session });
     const kycRes = await kycInstance.save({ session });
     const walletRes = await walletInstance.save({ session });
+    const apiSettingInstance = await merchantApiSettingInstance.save({
+      session,
+    });
 
+    if (!apiSettingInstance) {
+      throw new AppError(400, "Error in creating merchant developer");
+    }
     if (!merchantRes) {
       throw new AppError(400, "Error in creating merchant");
     }
