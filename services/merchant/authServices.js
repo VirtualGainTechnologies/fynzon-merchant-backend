@@ -199,6 +199,20 @@ exports.getAllMerchantDetails = (options) => {
           { $skip: page * Number(limit) },
           { $limit: Number(limit) },
           {
+            $lookup: {
+              from: "api-settings",
+              localField: "api_setting_id",
+              foreignField: "_id",
+              as: "api_setting_id",
+            },
+          },
+          {
+            $unwind: {
+              path: "$api_setting_id",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
             $project: {
               merchant_type: 1,
               email: 1,
@@ -210,6 +224,12 @@ exports.getAllMerchantDetails = (options) => {
               phone: 1,
               is_blocked: 1,
               createdAt: 1,
+              api_setting_id: {
+                test_ip: 1,
+                live_ip: 1,
+                test_api_key: 1,
+                live_api_key: 1,
+              },
             },
           },
         ],
