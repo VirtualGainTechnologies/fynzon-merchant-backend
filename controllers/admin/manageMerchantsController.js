@@ -107,7 +107,7 @@ exports.updateMerchantData = async (req, session) => {
       session,
       runValidators: true,
       ...(arrayFilters.length && { arrayFilters }),
-    }
+    } 
   );
   if (!updatedMerchantApiSetting) {
     throw new AppError(400, "Failed to update merchant api setting");
