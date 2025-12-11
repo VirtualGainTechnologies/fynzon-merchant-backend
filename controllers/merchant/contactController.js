@@ -136,7 +136,7 @@ exports.createOrUpdateContact = async (req, res) => {
   }
 
   const query = {
-    merchant_id: req.userId,
+    merchant_id: req.merchantId,
     mode: req_body.mode,
     ...((req_body?.email || req_body?.phone) && {
       $or: [
@@ -172,7 +172,7 @@ exports.createOrUpdateContact = async (req, res) => {
 
   const payload = {
     ...(req_body.action === "CREATE" && {
-      merchant_id: req.userId,
+      merchant_id: req.merchantId,
       merchant_email: req.email,
       date: new Date().getTime(),
     }),
@@ -201,7 +201,7 @@ exports.createOrUpdateContact = async (req, res) => {
     // update existing contact
     contactData = await updateContactByFilter(
       {
-        merchant_id: req.userId,
+        merchant_id: req.merchantId,
         mode: req_body.mode,
       },
       payload,
