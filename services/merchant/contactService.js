@@ -1,6 +1,4 @@
 // conatct types realted services
-const mongoose = require("mongoose");
-
 const {
   ContactTypeModel,
   ContactModel,
@@ -51,7 +49,7 @@ exports.updateAllContactTypesByFilter = (
   return ContactTypeModel.updateMany(filters, updateObject, options);
 };
 
-//conatcts realted
+// conatcts realted
 exports.createContact = (object) => {
   return ContactModel.create(object);
 };
@@ -104,7 +102,7 @@ exports.getAllContactTypesByMode = (options) => {
   const pipeline = [
     {
       $match: {
-        merchant_id: options.userId,
+        merchant_id: options.merchantId,
       },
     },
     {
@@ -121,4 +119,79 @@ exports.getAllContactTypesByMode = (options) => {
   ];
 
   return ContactTypeModel.aggregate(pipeline).allowDiskUse(true);
+};
+
+exports.getAllSingleContacts = (options) => {
+  // searchValue = user_email contact_name or user_phone
+  let searchQuery = [];
+  if (options?.searchValue) {
+    searchQuery = [
+      { user_email: { $regex: options.searchValue, $options: "i" } },
+      { contact_name: { $regex: options.searchValue, $options: "i" } },
+    ];
+    // if input is a phone number (digits only)
+    if (/^\d+$/.test(options.searchValue)) {
+      searchQuery.push({ user_phone: { $regex: options.searchValue } });
+    }
+  }
+
+  const filter = {
+    merchant_id: options.merchant_id,
+    mode: options.mode,
+    ...(options?.contactType &&
+      options?.contactType !== "ALL" && {
+        contact_type: options.contactType,
+      }),
+    ...(options?.searchValue && {
+      $or: searchQuery,
+    }),
+  };
+
+  const pipeline = [
+    {
+      $match: filter,
+    },
+    {
+      $facet: {
+        metadata: [
+          {
+            $count: "total_records",
+          },
+        ],
+        data: [
+          {
+            $project: {
+              _id: 0,
+              id: "$_id",
+              mode: "$mode",
+              email: "$user_email",
+              phone: "$user_phone",
+              contactId: "$contact_id",
+              contactType: "$contact_type",
+              contactName: "$contact_name",
+              notes: "$notes",
+              paymentMethods: "$payment_methods",
+              status: "$status",
+              date: {
+                $dateToString: {
+                  format: "%d-%m-%Y %H:%M:%S",
+                  date: { $toDate: { $add: ["$date", 19800000] } },
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        totalRecords: {
+          $ifNull: [{ $arrayElemAt: ["$metadata.total_records", 0] }, 0],
+        },
+        data: "$data",
+      },
+    },
+  ];
+
+  return ContactModel.aggregate(pipeline).allowDiskUse(true);
 };

@@ -82,7 +82,7 @@ const merchantAuthRouter = require("./routers/merchant/authRouter");
 const merchantKycRouter = require("./routers/merchant/kycRouter");
 const accountRouter = require("./routers/merchant/accountRouter");
 const developerRouter = require("./routers/merchant/developerRouter");
-const userContactRouter = require("./routers/merchant/contactRouter");
+const contactRouter = require("./routers/merchant/contactRouter");
 
 
 // shared-router-imports
@@ -99,7 +99,7 @@ app.use("/auth/api/v1", merchantAuthRouter);
 app.use("/kyc/api/v1", merchantKycRouter);
 app.use("/account/api/v1", accountRouter);
 app.use("/developer/api/v1", developerRouter);
-app.use("/contacts/api/v1", userContactRouter);
+app.use("/contacts/api/v1", contactRouter);
 
 
 // shared-routers
