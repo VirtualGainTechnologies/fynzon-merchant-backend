@@ -94,9 +94,7 @@ const createOrUpdateContactValidator = [
   // required only for update
   body("taxId")
     .trim()
-    .if(body("action").equals("CREATE"))
-    .notEmpty()
-    .withMessage("The field taxId is required"),
+    .optional(),
   body("status")
     .trim()
     .optional({ checkFalsy: true })
