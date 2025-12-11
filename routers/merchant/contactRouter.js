@@ -86,24 +86,52 @@ const createOrUpdateContactValidator = [
         throw new Error("Invalid phone number");
       }
     }),
-  body("referenceId").trim().optional({ checkFalsy: true }),
   body("note")
     .trim()
     .optional({ checkFalsy: true })
     .isLength({ max: 300 })
     .withMessage("note must be at most 300 characters long"),
   // required only for update
-  body("contactId")
+  body("taxId")
     .trim()
-    .if(body("action").equals("UPDATE"))
+    .if(body("action").equals("CREATE"))
     .notEmpty()
-    .withMessage("The field contactId is required"),
+    .withMessage("The field taxId is required"),
   body("status")
     .trim()
     .optional({ checkFalsy: true })
     .toUpperCase()
     .isIn(["ACTIVE", "INACTIVE"])
     .withMessage("The field status must be either 'ACTIVE' or 'INACTIVE'"),
+  body("address")
+    .if(body("action").equals("CREATE"))
+    .notEmpty()
+    .withMessage("The address object is required"),
+  body("address.city")
+    .trim()
+    .if(body("action").equals("CREATE"))
+    .notEmpty()
+    .withMessage("The field city is required"),
+  body("address.zip")
+    .trim()
+    .if(body("action").equals("CREATE"))
+    .notEmpty()
+    .withMessage("The field zip is required"),
+  body("address.state")
+    .trim()
+    .if(body("action").equals("CREATE"))
+    .notEmpty()
+    .withMessage("The field state is required"),
+  body("address.country")
+    .trim()
+    .if(body("action").equals("CREATE"))
+    .notEmpty()
+    .withMessage("The field country is required"),
+  body("address.full_address")
+    .trim()
+    .if(body("action").equals("CREATE"))
+    .notEmpty()
+    .withMessage("The field full_address is required"),
 ];
 
 const modeQueryValidator = [

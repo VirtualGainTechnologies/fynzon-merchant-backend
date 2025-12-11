@@ -24,18 +24,15 @@ exports.createContactType = async (req, res) => {
     "_id contact_types",
     { lean: true }
   );
-  if (!contactTypes) {
-    throw new AppError(400, "Failed to fetch contact types");
+  if (contactTypes) {
+    // check if contact type already exists inside the array
+    const isContactTypeExists = contactTypes.contact_types?.some(
+      (item) => item.mode === mode && item.name === contactType
+    );
+    if (isContactTypeExists) {
+      throw new AppError(400, "This contact type already exists");
+    }
   }
-
-  // check if contact type already exists inside the array
-  const isContactTypeExists = contactTypes.contact_types?.some(
-    (item) => item.mode === mode && item.name === contactType
-  );
-  if (isContactTypeExists) {
-    throw new AppError(400, "This contact type already exists");
-  }
-
   const contactTypeArray = contactTypes?.contact_types.filter(
     (item) => item.mode === mode
   ).length
@@ -86,7 +83,7 @@ exports.createContactType = async (req, res) => {
 
   const contactTypesData = await getAllContactTypesByMode({
     mode,
-    userId: req.userId,
+    merchantId: req.merchantId,
   });
 
   if (!contactTypesData) {
@@ -194,6 +191,19 @@ exports.createOrUpdateContact = async (req, res) => {
     ...(req_body.taxId && {
       tax_id: req_body.taxId,
     }),
+    ...(req_body?.address && {
+      address: {
+        ...(req_body?.address?.city && { city: req_body.address.city }),
+        ...(req_body?.address?.zip && { zip: req_body.address.zip }),
+        ...(req_body?.address?.state && { state: req_body.address.state }),
+        ...(req_body?.address?.country && {
+          country: req_body.address.country,
+        }),
+        ...(req_body?.address?.full_address && {
+          full_address: req_body.address.full_address,
+        }),
+      },
+    }),
   };
 
   let contactData = null;
@@ -234,6 +244,7 @@ exports.createOrUpdateContact = async (req, res) => {
       taxId: contactData?.tax_id || "",
       note: contactData?.note || "",
       status: contactData?.status,
+      address: contactData?.address,
       date: contactData?.date,
     },
   });
@@ -242,7 +253,7 @@ exports.createOrUpdateContact = async (req, res) => {
 exports.getAllContacts = async (req, res) => {
   const { mode = "LIVE", contactType = "ALL", searchValue = null } = req.query;
   const contactsData = await getAllSingleContacts({
-    merchant_id: req.userId,
+    merchant_id: req.merchantId,
     mode,
     contactType,
     ...(searchValue && {

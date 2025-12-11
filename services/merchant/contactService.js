@@ -166,11 +166,10 @@ exports.getAllSingleContacts = (options) => {
               mode: "$mode",
               email: "$user_email",
               phone: "$user_phone",
-              contactId: "$contact_id",
+              taxId: "$tax_id",
               contactType: "$contact_type",
               contactName: "$contact_name",
               notes: "$notes",
-              paymentMethods: "$payment_methods",
               status: "$status",
               date: {
                 $dateToString: {
@@ -178,6 +177,7 @@ exports.getAllSingleContacts = (options) => {
                   date: { $toDate: { $add: ["$date", 19800000] } },
                 },
               },
+              address: "$address",
             },
           },
         ],
