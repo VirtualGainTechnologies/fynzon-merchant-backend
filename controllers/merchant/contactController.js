@@ -199,8 +199,11 @@ exports.createOrUpdateContact = async (req, res) => {
         ...(req_body?.address?.country && {
           country: req_body.address.country,
         }),
-        ...(req_body?.address?.full_address && {
-          full_address: req_body.address.full_address,
+        ...(req_body?.address?.countryCode && {
+          country_code: req_body.address.countryCode,
+        }),
+        ...(req_body?.address?.fullAddress && {
+          full_address: req_body.address.fullAddress,
         }),
       },
     }),

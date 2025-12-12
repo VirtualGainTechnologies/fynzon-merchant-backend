@@ -92,9 +92,7 @@ const createOrUpdateContactValidator = [
     .isLength({ max: 300 })
     .withMessage("note must be at most 300 characters long"),
   // required only for update
-  body("taxId")
-    .trim()
-    .optional(),
+  body("taxId").trim().optional(),
   body("status")
     .trim()
     .optional({ checkFalsy: true })
@@ -125,7 +123,12 @@ const createOrUpdateContactValidator = [
     .if(body("action").equals("CREATE"))
     .notEmpty()
     .withMessage("The field country is required"),
-  body("address.full_address")
+  body("address.countryCode")
+    .trim()
+    .if(body("action").equals("CREATE"))
+    .notEmpty()
+    .withMessage("The field countryCode is required"),
+  body("address.fullAddress")
     .trim()
     .if(body("action").equals("CREATE"))
     .notEmpty()

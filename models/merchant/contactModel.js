@@ -108,6 +108,10 @@ const contactSchema = new mongoose.Schema(
         type: String,
         required: [true, "The field country is required"],
       },
+      country_code: {
+        type: String,
+        required: [true, "The field country_code is required"],
+      },
       full_address: {
         type: String,
         required: [true, "The field full_address is required"],
