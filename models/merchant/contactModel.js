@@ -78,14 +78,14 @@ const contactSchema = new mongoose.Schema(
       type: String,
       trim: true,
       required: [true, "The field user_email is required"],
-      unique: [true, "The field user_email must be unique"],
+      // unique: [true, "The field user_email must be unique"],
       lowercase: true,
       validate: [validator.isEmail, "Please provide a valid email address"],
     },
     user_phone: {
       type: String,
       trim: true,
-      unique: [true, "The field user_phone must be unique"],
+      // unique: [true, "The field user_phone must be unique"],
       validate: [
         validator.isMobilePhone,
         "Please provide a valid phone number",
