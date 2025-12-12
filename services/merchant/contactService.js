@@ -169,7 +169,7 @@ exports.getAllSingleContacts = (options) => {
               taxId: "$tax_id",
               contactType: "$contact_type",
               contactName: "$contact_name",
-              notes: "$notes",
+              note: "$note",
               status: "$status",
               date: {
                 $dateToString: {
