@@ -141,9 +141,6 @@ exports.createOrUpdateContact = async (req, res) => {
         ...((req_body?.phone && [{ user_phone: req_body.phone }]) || []),
       ],
     }),
-    ...(req_body.action === "UPDATE" && {
-      contact_id: { $ne: req_body.contactId },
-    }),
   };
 
   // check contact already exist or not
@@ -216,6 +213,7 @@ exports.createOrUpdateContact = async (req, res) => {
       {
         merchant_id: req.merchantId,
         mode: req_body.mode,
+        contact_type: req_body.contactType,
       },
       payload,
       { new: true }
