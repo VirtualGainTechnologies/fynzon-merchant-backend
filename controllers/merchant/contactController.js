@@ -212,7 +212,7 @@ exports.createOrUpdateContact = async (req, res) => {
     contactData = await updateContactByFilter(
       {
         merchant_id: req.merchantId,
-        email: req_body.email,
+        user_email: req_body.email,
       },
       payload,
       { new: true }
