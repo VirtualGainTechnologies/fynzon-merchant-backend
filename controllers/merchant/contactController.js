@@ -212,8 +212,7 @@ exports.createOrUpdateContact = async (req, res) => {
     contactData = await updateContactByFilter(
       {
         merchant_id: req.merchantId,
-        mode: req_body.mode,
-        contact_type: req_body.contactType,
+        email: req_body.email,
       },
       payload,
       { new: true }
