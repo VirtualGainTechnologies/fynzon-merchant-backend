@@ -11,7 +11,7 @@ exports.createInvoice = async (req, res) => {
     contactName,
     contactType,
     contactEmail,
-    contactPhone,
+    contactPhone, 
     address,
     invoiceDate,
     dueDate,
