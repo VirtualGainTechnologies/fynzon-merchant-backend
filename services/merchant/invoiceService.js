@@ -1,6 +1,6 @@
 const { InvoiceModel } = require("../../models/merchant/invoiceModel");
 
-exports.createInvoice = (object) => {
+exports.createInvoiceDoc = (object) => {
   return InvoiceModel.create(object);
 };
 

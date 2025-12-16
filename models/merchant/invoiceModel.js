@@ -182,6 +182,14 @@ const invoiceSchema = new mongoose.Schema(
       type: Number,
       required: [true, "The field total_amount is required"],
     },
+    status: {
+      type: String,
+      enum: {
+        values: ["DRAFTED", "PENDING", "SUCCESS", "FAILED"],
+        message: "{value} is not supported",
+      },
+      default: "PENDING",
+    },
     date: {
       type: Number,
       default: new Date().getTime(),
