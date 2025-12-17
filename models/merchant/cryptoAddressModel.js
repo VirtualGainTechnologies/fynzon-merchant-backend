@@ -3,10 +3,10 @@ const validator = require("validator");
 
 const cryptoAddressSchema = new mongoose.Schema(
   {
-    merchantId: {
+    merchant_id: {
       type: mongoose.Schema.Types.ObjectId,
       refer: "merchants",
-      required: true,
+      required: [true, "Merchant id is required field"],
     },
     email: {
       type: String,
