@@ -152,10 +152,3 @@ exports.generateMerchantCryptoAddressData = async () => {
   }
 };
 
-exports.getMerchantCryptoAddressByFilter = (
-  filter = {},
-  projections = null,
-  options = {}
-) => {
-  return MerchantCryptoAddressModel.findOne(filter, projections, options);
-};

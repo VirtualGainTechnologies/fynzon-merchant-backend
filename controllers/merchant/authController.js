@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const moment = require("moment");
 const bcrypt = require("bcryptjs");
+const QRCode = require("qrcode");
 
 const { sendOtpToEmail } = require("../../utils/sendOtp");
 const AppError = require("../../utils/AppError");
@@ -18,6 +19,9 @@ const {
   pvtltdToPrivateLimitedConverter,
 } = require("../../utils/pvtltdToPrivateLimitedConverter");
 const { verifyJwtToken } = require("../../utils/verifyJwtToken");
+const {
+  getMerchantCryptoAddressByFilter,
+} = require("../../services/merchant/cryptoAddressServices");
 
 exports.validateMerchant = async (req, res) => {
   const req_body = { ...req.body };
@@ -477,4 +481,31 @@ exports.getMerchantDetails = async (req, res) => {
   };
 
   res.status(200).json(response);
+};
+
+exports.getMerchantCryptoAddress = async (req, res) => {
+  const { network } = req.params;
+
+  const cryptoAddress = await getMerchantCryptoAddressByFilter(
+    { email: req.email },
+    `${network}`,
+    { lean: true }
+  );
+
+  if (!cryptoAddress || !cryptoAddress?.[network]?.address) {
+    throw new AppError(400, "Merchant crypto address not found");
+  }
+
+  // generate QR code
+  const qrCode = await QRCode.toDataURL(cryptoAddress?.[network]?.address);
+
+  res.status(200).json({
+    message: "Merchant crypto address fetched successfully",
+    error: false,
+    data: {
+      network,
+      address: cryptoAddress?.[network]?.address,
+      qrCode,
+    },
+  });
 };
