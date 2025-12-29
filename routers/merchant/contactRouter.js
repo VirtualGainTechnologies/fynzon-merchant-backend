@@ -79,20 +79,15 @@ const createOrUpdateContactValidator = [
   body("phone")
     .trim()
     .optional({ checkFalsy: true })
-    .custom(async (val) => {
-      if (/^[6-9]{1}[0-9]{9}$/.test(val)) {
-        return true;
-      } else {
-        throw new Error("Invalid phone number");
-      }
-    }),
+    .isMobilePhone("any", { strictMode: false })
+    .withMessage("Invalid phone number"),
   body("note")
     .trim()
     .optional({ checkFalsy: true })
     .isLength({ max: 300 })
     .withMessage("note must be at most 300 characters long"),
   // required only for update
-  body("taxId").trim().optional(),
+  body("taxId").optional(),
   body("status")
     .trim()
     .optional({ checkFalsy: true })
@@ -108,16 +103,8 @@ const createOrUpdateContactValidator = [
     .if(body("action").equals("CREATE"))
     .notEmpty()
     .withMessage("The field city is required"),
-  body("address.zip")
-    .trim()
-    .if(body("action").equals("CREATE"))
-    .notEmpty()
-    .withMessage("The field zip is required"),
-  body("address.state")
-    .trim()
-    .if(body("action").equals("CREATE"))
-    .notEmpty()
-    .withMessage("The field state is required"),
+  body("address.zip").optional(),
+  body("address.state").optional(),
   body("address.country")
     .trim()
     .if(body("action").equals("CREATE"))
