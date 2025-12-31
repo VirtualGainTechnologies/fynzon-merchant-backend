@@ -84,6 +84,7 @@ const accountRouter = require("./routers/merchant/accountRouter");
 const developerRouter = require("./routers/merchant/developerRouter");
 const contactRouter = require("./routers/merchant/contactRouter");
 const invoiceRouter = require("./routers/merchant/invoiceRouter");
+const generatePdfRouter = require("./routers/merchant/generatePdf");
 
 // shared-router-imports
 const resendOtpRouter = require("./routers/shared/resendOtpRouter");
@@ -101,6 +102,7 @@ app.use("/account/api/v1", accountRouter);
 app.use("/developer/api/v1", developerRouter);
 app.use("/contacts/api/v1", contactRouter);
 app.use("/invoice/api/v1", invoiceRouter);
+app.use("/invoice/api/v1", generatePdfRouter)
 
 // shared-routers
 app.use("/resend-otp/api/v1", resendOtpRouter);
