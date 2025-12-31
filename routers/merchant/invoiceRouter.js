@@ -3,10 +3,12 @@ const { body } = require("express-validator");
 const { catchAsync } = require("../../utils/catchAsync");
 const {
   createInvoice,
+  sendInvoiceEmail,
 } = require("../../controllers/merchant/invoiceController");
 const {
   verifyMerchantToken,
 } = require("../../middlewares/merchant/verifyMerchantToken");
+const { uploadPdf } = require("../../utils/imageUpload");
 
 const createInvoiceValidator = [
   body("mode")
@@ -150,11 +152,27 @@ const createInvoiceValidator = [
     .withMessage("The field isDrafted vlaue must be boolean"),
 ];
 
+const sendInvoiceEmailValidator = [
+   body("email")
+    .notEmpty()
+    .withMessage("The field email is required")
+    .isEmail()
+    .withMessage("Invalid email"),
+];
+
 router.post(
   "/create-invoice",
   createInvoiceValidator,
   catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
   catchAsync("createInvoice api", createInvoice)
+);
+
+router.post(
+  "/send-invoice-email",
+  uploadPdf.single("invoice"),
+  sendInvoiceEmailValidator,
+  catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
+  catchAsync("sendInvoiceEmail api", sendInvoiceEmail)
 );
 
 module.exports = router;

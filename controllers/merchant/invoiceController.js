@@ -1,6 +1,7 @@
 const { createInvoiceDoc } = require("../../services/merchant/invoiceService");
 const AppError = require("../../utils/AppError");
 const { generateUniqueId } = require("../../utils/generateUniqueId");
+const { sendEmailWithAttachment } = require("../../utils/emailDispatcher");
 
 exports.createInvoice = async (req, res) => {
   const {
@@ -11,7 +12,7 @@ exports.createInvoice = async (req, res) => {
     contactName,
     contactType,
     contactEmail,
-    contactPhone, 
+    contactPhone,
     address,
     invoiceDate,
     dueDate,
@@ -75,5 +76,25 @@ exports.createInvoice = async (req, res) => {
     message: "Invoice created successfully",
     error: false,
     data: invoice,
+  });
+};
+
+exports.sendInvoiceEmail = async (req, res) => {
+  if (!req.file) {
+    throw new AppError(400, "Invoice PDF is required");
+  }
+  const sendEmail = await sendEmailWithAttachment({
+    type: "invoice-email",
+    email: req.body.email,
+    file: req.file,
+  });
+  if (sendEmail.error) {
+    throw new AppError(400, sendEmail.message);
+  }
+
+  res.status(200).json({
+    message: "Invoice email sent successfully",
+    error: false,
+    data: null,
   });
 };

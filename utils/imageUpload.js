@@ -11,7 +11,7 @@ const {
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 require("dotenv").config();
 
-const AppError = require("./AppError"); 
+const AppError = require("./AppError");
 
 // getDate
 const date = new Date();
@@ -30,6 +30,20 @@ const uploadImage = multer({
       cb(null, true);
     } else {
       cb(new AppError(400, "Not an image! Please upload only images"), false);
+    }
+  },
+});
+
+// middleware function
+const uploadPdf = multer({
+  storage: multer.memoryStorage({
+    destination: (req, file, callback) => callback(null, ""),
+  }),
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === "application/pdf") {
+      cb(null, true);
+    } else {
+      cb(new AppError(400, "Only PDF files are allowed"), false);
     }
   },
 });
@@ -297,6 +311,7 @@ const deleteMultipleFiles = async (keys = []) => {
 
 module.exports = {
   uploadImage,
+  uploadPdf,
   uploadPublicFile,
   uploadMultiplePublicFile,
   uploadPrivateFile,
