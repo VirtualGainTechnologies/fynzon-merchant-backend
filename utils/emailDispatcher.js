@@ -61,3 +61,55 @@ exports.sendEmail = async (emailData) => {
     };
   }
 };
+
+exports.sendEmailWithAttachment = async (emailData) => {
+  try {
+    let subject, text;
+
+    switch (emailData?.type) {
+      case "invoice-email":
+        subject = "Your Invoice";
+        text = "Please find the attached document";
+        break;
+
+      default:
+        throw new AppError(400, "Invalid email type");
+    }
+
+    if (!emailData?.file) {
+      throw new AppError(400, "Email attachment is required");
+    }
+
+    await sgMail.send({
+      from: process.env.SENDGRID_FROM_EMAIL,
+      to: emailData?.email,
+      subject,
+      text,
+      attachments: [
+        {
+          content: emailData.file.buffer.toString("base64"),
+          filename: emailData.file.originalname,
+          type: emailData.file.mimetype,
+          disposition: "attachment",
+        },
+      ],
+    });
+
+    return {
+      message: "Email sent successfully",
+      error: false,
+      data: null,
+    };
+  } catch (err) {
+    logger.error(
+      `error in catch block of sendEmailWithAttachment ==> ${JSON.stringify(
+        err
+      )}`
+    );
+    return {
+      message: err.message || "Failed to send email",
+      error: true,
+      data: null,
+    };
+  }
+};

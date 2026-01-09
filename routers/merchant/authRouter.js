@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { body } = require("express-validator");
+const { body, param } = require("express-validator");
 
 const {
   sendRegistrationOtp,
@@ -12,6 +12,7 @@ const {
   validateMerchant,
   logout,
   getMerchantDetails,
+  getMerchantCryptoAddress,
 } = require("../../controllers/merchant/authController");
 const { catchAsync, catchAsyncWithSession } = require("../../utils/catchAsync");
 const {
@@ -20,6 +21,9 @@ const {
 const {
   checkMerchantLoginAttempts,
 } = require("../../middlewares/merchant/checkLoginAttempts");
+const {
+  verifyMerchantToken,
+} = require("../../middlewares/merchant/verifyMerchantToken");
 
 const validateMerchantValidator = [
   body("email").optional({ nullable: true, checkFalsy: true }).toLowerCase(),
@@ -171,6 +175,13 @@ const changePasswordValidator = [
     .trim()
     .withMessage("Please provide new password"),
 ];
+const getMerchantCryptoAddressValidator = [
+  param("network")
+    .notEmpty()
+    .withMessage("The field network is required")
+    .isIn(["btc", "trc20", "erc20"])
+    .withMessage("Network must be one of btc, trc20, erc20"),
+];
 
 // Validate merchant
 router.post(
@@ -232,10 +243,18 @@ router.post(
 // Logout
 router.get("/logout", catchAsync("logout api", logout));
 
-// Get user details
+// Get merchant details
 router.get(
   "/get-merchant-details",
   catchAsync("getMerchantDetails api", getMerchantDetails)
+);
+
+// Get merchant crypto address
+router.get(
+  "/merchant/crypto-address/:network",
+  getMerchantCryptoAddressValidator,
+  catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
+  catchAsync("getMerchantCryptoAddress api", getMerchantCryptoAddress)
 );
 
 module.exports = router;

@@ -120,6 +120,10 @@ const merchantSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "api-settings",
     },
+    crypto_address_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "crypto-address",
+    },
     last_login_ip: {
       type: String,
       default: "",

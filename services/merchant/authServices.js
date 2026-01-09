@@ -1,6 +1,9 @@
 const {
   MerchantApiSettingModel,
 } = require("../../models/merchant/apisettingmodel");
+const {
+  MerchantCryptoAddressModel,
+} = require("../../models/merchant/cryptoAddressModel");
 const { MerchantKycModel } = require("../../models/merchant/kycModel");
 const { MerchantModel } = require("../../models/merchant/merchantModel");
 const { MerchantWalletModel } = require("../../models/merchant/walletModel");
@@ -8,6 +11,10 @@ const AppError = require("../../utils/AppError");
 const {
   pvtltdToPrivateLimitedConverter,
 } = require("../../utils/pvtltdToPrivateLimitedConverter");
+const {
+  generateMerchantCryptoAddressData,
+} = require("./cryptoAddressServices");
+const { merchantWalletData } = require("./walletServices");
 
 exports.createMerchant = (object) => {
   return MerchantModel.create(object);
@@ -123,31 +130,50 @@ exports.registerMerchant = async (req_body, session) => {
     });
 
     // create wallet instance
+    const walletData = await merchantWalletData();
+    if (walletData.error) throw new AppError(400, walletData.message);
     const walletInstance = new MerchantWalletModel({
+      merchant_id: merchantInstance._id,
+      email: merchantInstance.email,
+      ...walletData.data,
+    });
+
+    // create merchant developer instance
+    const apiSettingInstance = new MerchantApiSettingModel({
       merchant_id: merchantInstance._id,
       email: merchantInstance.email,
     });
 
-    // create merchant developer instance
-    const merchantApiSettingInstance = new MerchantApiSettingModel({
+    // create crypto address instance
+    const cryptoAddressData = await generateMerchantCryptoAddressData();
+    if (cryptoAddressData.error)
+      throw new AppError(400, "Failed to generate crypto address");
+    const cryptoAddressInstance = new MerchantCryptoAddressModel({
       merchant_id: merchantInstance._id,
       email: merchantInstance.email,
+      ...cryptoAddressData.data,
     });
 
     // update merchant instance
     merchantInstance.kyc_id = kycInstance._id;
     merchantInstance.wallet_id = walletInstance._id;
-    merchantInstance.api_setting_id = merchantApiSettingInstance._id;
+    merchantInstance.api_setting_id = apiSettingInstance._id;
+    merchantInstance.crypto_address_id = cryptoAddressInstance._id;
 
     // save all documents
     const merchantRes = await merchantInstance.save({ session });
     const kycRes = await kycInstance.save({ session });
     const walletRes = await walletInstance.save({ session });
-    const apiSettingInstance = await merchantApiSettingInstance.save({
+    const cryptoAddressRes = await cryptoAddressInstance.save({ session });
+    const apiSettingRes = await apiSettingInstance.save({
       session,
     });
 
-    if (!apiSettingInstance) {
+    if (!cryptoAddressRes) {
+      throw new AppError(400, "Error in creating merchant crypto address");
+    }
+
+    if (!apiSettingRes) {
       throw new AppError(400, "Error in creating merchant developer");
     }
     if (!merchantRes) {
