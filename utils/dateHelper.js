@@ -1,3 +1,5 @@
+const AppError = require("./AppError");
+
 exports.calculateAge = (date) => {
   const formattedDate = date.split("/"); //for date format dd/mm/yyyy
   const dateTimeStamp = new Date(
@@ -76,4 +78,65 @@ exports.formatDateToIST = (timestamp) => {
   const formattedTime = date.toLocaleTimeString("en-IN", timeOptions);
 
   return { formattedISTDate, formattedTime };
+};
+
+exports.buildCronPattern = (data) => {
+  try {
+    const { every, day, date, month } = data;
+    let cron = "";
+
+    const requireField = (field, value) => {
+      if (value === undefined || value === null) {
+        throw new Error(`${field} is required for ${every} recurrence`);
+      }
+    };
+
+    const validateRange = (field, value, min, max) => {
+      if (!Number.isInteger(value) || value < min || value > max) {
+        throw new Error(`${field} must be between ${min} and ${max}`);
+      }
+    };
+
+    switch (every) {
+      case "week":
+        requireField("day", day);
+        validateRange("day", day, 0, 6);
+        cron = `0 0 * * ${day}`; // day: 0=Sunday ... 6=Saturday
+        break;
+      case "month":
+        requireField("date", date);
+        validateRange("date", date, 1, 31);
+        cron = `0 0 ${date} * *`;
+        break;
+      case "year":
+        requireField("month", month);
+        validateRange("month", month, 1, 12);
+        requireField("date", date);
+        validateRange("date", date, 1, 31);
+        cron = `0 0 ${date} ${month} *`;
+        break;
+      default:
+        throw new Error(`Invalid recurring type: ${every}`);
+    }
+
+    // validate cron
+    const isValid = isValidCron(cron, {
+      seconds: false,
+      allowBlankDay: true,
+      alias: true,
+      includeYears: false,
+    });
+
+    if (!isValid) {
+      throw new Error(`Generated cron pattern is invalid: ${cron}`);
+    }
+
+    if (!cron || typeof cron !== "string" || cron.trim() === "") {
+      throw new Error("Cron expression cannot be empty");
+    }
+
+    return cron;
+  } catch (err) {
+    throw new AppError(400, err?.message || "Failed to generate cron");
+  }
 };

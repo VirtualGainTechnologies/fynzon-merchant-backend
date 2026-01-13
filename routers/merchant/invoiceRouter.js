@@ -24,7 +24,7 @@ const createInvoiceValidator = [
   body("depositNetwork")
     .notEmpty()
     .withMessage("The field depositNetwork is required")
-    .isIn(["TRC-20"])
+    .isIn(["TRC20"])
     .withMessage("Invalid depositNetwork"),
   body("depositAddress")
     .notEmpty()
@@ -71,7 +71,7 @@ const createInvoiceValidator = [
   body("invoiceDate")
     .notEmpty()
     .withMessage("The field invoiceDate is required")
-    .custom(async (val) => {
+    .custom((val) => {
       if (new Date(val).getTime()) {
         return true;
       } else {
@@ -81,7 +81,7 @@ const createInvoiceValidator = [
   body("dueDate")
     .notEmpty()
     .withMessage("The field dueDate is required")
-    .custom(async (val) => {
+    .custom((val) => {
       if (new Date(val).getTime()) {
         return true;
       } else {
@@ -153,7 +153,7 @@ const createInvoiceValidator = [
 ];
 
 const sendInvoiceEmailValidator = [
-   body("email")
+  body("email")
     .notEmpty()
     .withMessage("The field email is required")
     .isEmail()

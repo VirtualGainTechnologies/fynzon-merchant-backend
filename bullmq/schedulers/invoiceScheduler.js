@@ -1,0 +1,125 @@
+const moment = require("moment-timezone");
+
+const { invoiceQueue } = require("../queues/invoiceQueue");
+const { logger } = require("../../utils/winstonLogger");
+const { buildCronPattern } = require("../../utils/dateHelper");
+
+exports.scheduleInvoiceIssue = async (data) => {
+  try {
+    const { issue_date, _id, tz = "UTC" } = data;
+    await invoiceQueue.add(
+      "ISSUE_INVOICE",
+      { _id, tz },
+      {
+        jobId: String(`issue-invoice-${_id}`),
+        removeOnComplete: true,
+        removeOnFail: true,
+        delay: Math.max(
+          moment(issue_date).tz(tz).startOf("day").diff(moment().tz(tz)),
+          0
+        ),
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5000,
+        },
+      }
+    );
+    logger.info(`Invoice Issue job added | jobId: ${jobId}`);
+  } catch (err) {
+    logger.error(`Failed to add Invoice Issue job: ${err.message}`);
+    throw err;
+  }
+};
+
+exports.scheduleRecurringInvoiceIssue = async (data) => {
+  try {
+    const {
+      recurring: { every, day, date, month },
+      _id,
+      tz = "UTC",
+    } = data;
+    const jobId = String(`issue-invoice-${_id.toString()}`);
+    const cron = buildCronPattern({ every, day, date, month });
+    await invoiceQueue.add(
+      "ISSUE_INVOICE",
+      { _id, tz },
+      {
+        jobId,
+        removeOnComplete: false,
+        removeOnFail: false,
+        repeat: {
+          cron,
+          tz,
+        },
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5000,
+        },
+      }
+    );
+    logger.info(`Invoice Issue job added | jobId: ${jobId}`);
+  } catch (err) {
+    logger.error(`Failed to add Invoice Issue job: ${err.message}`);
+    throw err;
+  }
+};
+
+exports.scheduleInvoiceExpiry = async (data) => {
+  try {
+    const { due_date, _id, tz = "UTC" } = data;
+    const jobId = String(`expire-invoice-${_id.toString()}`);
+
+    await invoiceQueue.add(
+      "EXPIRE_INVOICE",
+      { _id },
+      {
+        jobId,
+        removeOnComplete: true,
+        removeOnFail: true,
+        delay: Math.max(
+          moment(due_date).tz(tz).endOf("day").diff(moment().tz(tz)),
+          0
+        ),
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5000,
+        },
+      }
+    );
+    logger.info(`Invoice expiry job added | jobId: ${jobId}`);
+  } catch (err) {
+    logger.error(`Failed to add Invoice expiry job: ${err.message}`);
+    throw err;
+  }
+};
+
+exports.scheduleRecurringInvoiceExpiry = async (data) => {
+  try {
+    const { issue_date, _id, expiry_days } = data;
+    const jobId = String(
+      `expire-invoice-${_id.toString()}-${new Date(issue_date).getTime()}`
+    );
+    await invoiceQueue.add(
+      "EXPIRE_INVOICE",
+      { _id },
+      {
+        jobId,
+        removeOnComplete: true,
+        removeOnFail: true,
+        delay: parseInt(expiry_days) * 24 * 60 * 60 * 1000,
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5000,
+        },
+      }
+    );
+    logger.info(`Invoice expiry job added | jobId: ${jobId}`);
+  } catch (err) {
+    logger.error(`Failed to add Invoice expiry job: ${err.message}`);
+    throw err;
+  }
+};

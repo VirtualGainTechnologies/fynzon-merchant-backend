@@ -38,7 +38,7 @@ const invoiceSchema = new mongoose.Schema(
       type: String,
       trim: true,
       enum: {
-        values: ["TRC-20"],
+        values: ["TRC20"],
         message: "{value} is not supported",
       },
       required: [true, "The field deposit_network is required"],
@@ -104,13 +104,48 @@ const invoiceSchema = new mongoose.Schema(
       trim: true,
       required: [true, "The field invoice_number is required"],
     },
-    invoice_date: {
-      type: Number,
-      required: [true, "The field invoice_date is required"],
+    issue_date: {
+      type: String,
+      required: [true, "The field issue_date is required"],
     },
     due_date: {
-      type: Number,
+      type: String,
       required: [true, "The field due_date is required"],
+    },
+    recurring: {
+      every: {
+        type: String,
+        trim: true,
+        enum: {
+          values: ["week", "month", "year"],
+          message: "{VALUE} is not supported",
+        },
+      },
+      day: {
+        type: Number,
+        min: 0,
+        max: 6,
+      },
+      date: {
+        type: Number,
+        min: 1,
+        max: 31,
+      },
+      month: {
+        type: Number,
+        min: 1,
+        max: 12,
+      },
+      expiry_days: {
+        type: Number,
+        min: 1,
+        default: 1,
+      },
+    },
+    invoice_type: {
+      type: String,
+      enum: ["INSTANT", "SCHEDULED", "RECURRING"],
+      required: [true, "The field invoice_type is required"],
     },
     invoice_discription: {
       type: String,

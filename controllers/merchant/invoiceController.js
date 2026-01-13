@@ -2,6 +2,14 @@ const { createInvoiceDoc } = require("../../services/merchant/invoiceService");
 const AppError = require("../../utils/AppError");
 const { generateUniqueId } = require("../../utils/generateUniqueId");
 const { sendEmailWithAttachment } = require("../../utils/emailDispatcher");
+const {
+  handleIssueInvoice,
+} = require("../../bullmq/processors/invoiceProcessor");
+const {
+  scheduleInvoiceIssue,
+  scheduleRecurringInvoiceIssue,
+  scheduleInvoiceExpiry,
+} = require("../../bullmq/schedulers/invoiceScheduler");
 
 exports.createInvoice = async (req, res) => {
   const {
@@ -14,8 +22,8 @@ exports.createInvoice = async (req, res) => {
     contactEmail,
     contactPhone,
     address,
-    invoiceDate,
     dueDate,
+    issueDate,
     invoiceDescription,
     baseCurrency,
     conversionRate,
@@ -24,6 +32,9 @@ exports.createInvoice = async (req, res) => {
     taxPercentage,
     totalAmount,
     isDrafted,
+    invoiceType,
+    recurring,
+    timezone="UTC"
   } = req.body;
 
   const invoice = await createInvoiceDoc({
@@ -46,8 +57,6 @@ exports.createInvoice = async (req, res) => {
       full_address: address.fullAddress,
     },
     invoice_number: `FYN${generateUniqueId(12)}`,
-    invoice_date: new Date(invoiceDate).getTime(),
-    due_date: new Date(dueDate).getTime(),
     invoice_discription: invoiceDescription,
     base_currency: baseCurrency,
     conversion_rate: {
@@ -65,11 +74,39 @@ exports.createInvoice = async (req, res) => {
     discount_percentage: discountPercentage,
     tax_percentage: taxPercentage,
     total_amount: totalAmount,
+    issue_date: issueDate,
+    due_date: dueDate,
+    recurring: recurring,
+    invoice_type: invoiceType,
+    ...(invoiceType == "RECURRING" && {
+      recurring,
+    }),
     status: isDrafted ? "DRAFTED" : "PENDING",
   });
 
   if (!invoice) {
     throw new AppError(400, "Failed to create invoice");
+  }
+  const { issue_date, due_date, _id } = invoice;
+
+  // schedule jobs
+  switch (invoiceType) {
+    case "SCHEDULED":
+      await scheduleInvoiceIssue({ issue_date, _id, tz:timezone });
+      await scheduleInvoiceExpiry({ due_date, _id, tz: timezone});
+      break;
+
+    case "RECURRING":
+      await scheduleRecurringInvoiceIssue({ recurring, _id, tz: timezone });
+      break;
+
+    case "INSTANT":
+      await handleIssueInvoice({ _id, tz:timezone });
+      await scheduleInvoiceExpiry({ due_date, _id, tz: timezone });
+      break;
+
+    default:
+      throw new AppError(400, "Invalid payout type");
   }
 
   res.status(200).json({

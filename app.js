@@ -13,7 +13,8 @@ const globalErrorHandler = require("./middlewares/shared/globalErrorHandler");
 const { logger } = require("./utils/winstonLogger");
 
 require("dotenv").config();
-// require("./utils/redisClient");
+require("./bullmq/redis");
+
 // start express app
 const app = express();
 logger.info("Running environment is ===>", app.get("env"));
