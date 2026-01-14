@@ -1,3 +1,5 @@
+const moment = require("moment-timezone");
+
 const { createInvoiceDoc } = require("../../services/merchant/invoiceService");
 const AppError = require("../../utils/AppError");
 const { generateUniqueId } = require("../../utils/generateUniqueId");
@@ -24,7 +26,7 @@ exports.createInvoice = async (req, res) => {
     address,
     dueDate,
     issueDate,
-    invoiceDescription,
+    invoiceDiscription,
     baseCurrency,
     conversionRate,
     items,
@@ -34,7 +36,7 @@ exports.createInvoice = async (req, res) => {
     isDrafted,
     invoiceType,
     recurring,
-    timezone="UTC"
+    timezone = "UTC",
   } = req.body;
 
   const invoice = await createInvoiceDoc({
@@ -57,7 +59,7 @@ exports.createInvoice = async (req, res) => {
       full_address: address.fullAddress,
     },
     invoice_number: `FYN${generateUniqueId(12)}`,
-    invoice_discription: invoiceDescription,
+    invoice_discription: invoiceDiscription,
     base_currency: baseCurrency,
     conversion_rate: {
       currency: conversionRate.currency,
@@ -74,8 +76,11 @@ exports.createInvoice = async (req, res) => {
     discount_percentage: discountPercentage,
     tax_percentage: taxPercentage,
     total_amount: totalAmount,
-    issue_date: issueDate,
-    due_date: dueDate,
+    issue_date:
+      invoiceType == "INSTANT"
+        ? moment().tz(timezone).format("YYYY-MM-DD")
+        : issueDate || "N/A",
+    due_date: dueDate || "N/A",
     recurring: recurring,
     invoice_type: invoiceType,
     ...(invoiceType == "RECURRING" && {
@@ -92,8 +97,8 @@ exports.createInvoice = async (req, res) => {
   // schedule jobs
   switch (invoiceType) {
     case "SCHEDULED":
-      await scheduleInvoiceIssue({ issue_date, _id, tz:timezone });
-      await scheduleInvoiceExpiry({ due_date, _id, tz: timezone});
+      await scheduleInvoiceIssue({ issue_date, _id, tz: timezone });
+      await scheduleInvoiceExpiry({ due_date, _id, tz: timezone });
       break;
 
     case "RECURRING":
@@ -101,7 +106,7 @@ exports.createInvoice = async (req, res) => {
       break;
 
     case "INSTANT":
-      await handleIssueInvoice({ _id, tz:timezone });
+      await handleIssueInvoice({ _id, tz: timezone });
       await scheduleInvoiceExpiry({ due_date, _id, tz: timezone });
       break;
 

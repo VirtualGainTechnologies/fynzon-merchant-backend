@@ -3,10 +3,16 @@ const validator = require("validator");
 
 const walletSchema = new mongoose.Schema(
   {
-    merchant_id: {
+    user_id: {
       type: mongoose.Schema.Types.ObjectId,
-      refer: "merchant",
-      required: true,
+      trim: true,
+      refPath: "user_category",
+      required: [true, "user_id is required field"],
+    },
+    user_category: {
+      type: String,
+      enum: ["merchant", "contact"],
+      required: [true, "user_category is required field"],
     },
     email: {
       type: String,

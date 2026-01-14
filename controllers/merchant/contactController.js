@@ -125,7 +125,7 @@ exports.getContactTypes = async (req, res) => {
 };
 
 // contacts
-exports.createOrUpdateContact = async (req, res) => {
+exports.createOrUpdateContact = async (req, session) => {
   const req_body = Object.assign({}, req.body);
 
   if (req_body.mode === "LIVE" && req.kycStatus !== "VERIFIED") {
@@ -169,13 +169,11 @@ exports.createOrUpdateContact = async (req, res) => {
       merchant_id: req.merchantId,
       merchant_email: req.email,
       date: new Date().getTime(),
+      user_email: req_body.email,
     }),
     mode: req_body.mode,
     contact_name: req_body.contactName,
     contact_type: req_body.contactType,
-    ...(req_body.email && {
-      user_email: req_body.email,
-    }),
     ...(req_body.phone && {
       user_phone: req_body.phone,
     }),
@@ -222,13 +220,14 @@ exports.createOrUpdateContact = async (req, res) => {
       throw new AppError(400, "Error in updating contact");
     }
   } else {
-    contactData = await createContact(payload);
-    if (!contactData) {
+    const contact = await createContact(payload, session);
+    if (contact.error) {
       throw new AppError(400, "Error in creating contact");
     }
+    contactData = contact.data;
   }
 
-  res.status(200).json({
+  return {
     message: `Details ${
       req_body.action === "CREATE" ? "added" : "updated"
     } successfully`,
@@ -247,7 +246,7 @@ exports.createOrUpdateContact = async (req, res) => {
       address: contactData?.address,
       date: contactData?.date,
     },
-  });
+  };
 };
 
 exports.getAllContacts = async (req, res) => {

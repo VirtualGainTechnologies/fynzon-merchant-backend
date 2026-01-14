@@ -18,7 +18,6 @@ const {
 exports.handleIssueInvoice = async (jobData) => {
   try {
     const { _id, tz } = jobData;
-
     // get invoice
     const invoice = await getInvoiceById(
       _id,
@@ -30,16 +29,17 @@ exports.handleIssueInvoice = async (jobData) => {
     }
     const {
       issue_date,
+      due_date,
       recurring: { expiry_days },
       invoice_type,
-      merchant_email,
+      contact_email,
       deposit_network,
     } = invoice;
 
     // get crypto address
     const network = deposit_network.toLowerCase();
     const cryptoAddress = await getMerchantCryptoAddressByFilter(
-      { email: merchant_email },
+      { email: contact_email },
       `${network}`,
       { lean: true }
     );
@@ -53,6 +53,13 @@ exports.handleIssueInvoice = async (jobData) => {
       ...invoice,
       qrCode,
       newIssueDate: moment().tz(tz).format("YYYY-MM-DD"),
+      newDueDate:
+        invoice_type == "RECURRING"
+          ? moment()
+              .tz(tz)
+              .add(expiry_days * 1, "days")
+              .format("YYYY-MM-DD")
+          : due_date,
       networkAddress: cryptoAddress?.[network]?.address,
       company_name: "fynzon",
     });
@@ -63,7 +70,7 @@ exports.handleIssueInvoice = async (jobData) => {
     // send email
     const sendEmail = await sendEmailWithAttachment({
       type: "invoice-email",
-      email: merchant_email,
+      email: contact_email,
       file: {
         buffer: safePdfBuffer,
         originalname: "invoice.pdf",

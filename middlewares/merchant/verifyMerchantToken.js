@@ -41,7 +41,7 @@ exports.verifyMerchantToken = async (req, res, next) => {
   }
 
   const kycData = await getMerchantKycByFilter(
-    { merchant_id: merchant._id },
+    { user_id: merchant._id },
     "_id kyc_status",
     {
       lean: true,

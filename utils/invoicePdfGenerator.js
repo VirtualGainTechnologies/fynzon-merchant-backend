@@ -33,7 +33,7 @@ const generateInvoiceHtml = async (data) => {
   const {
     invoice_number,
     newIssueDate,
-    due_date,
+    newDueDate,
     base_currency,
     conversion_rate,
     invoice_discription,
@@ -53,7 +53,7 @@ const generateInvoiceHtml = async (data) => {
   } = data;
 
   const issueDate = newIssueDate || data.issue_date;
-  const dueDate = due_date;
+  const dueDate = newDueDate;
 
   // Calculate totals
   let subtotal = 0;

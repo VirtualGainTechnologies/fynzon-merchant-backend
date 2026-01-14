@@ -136,6 +136,18 @@ const contactSchema = new mongoose.Schema(
       },
       default: "ACTIVE",
     },
+    kyc_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "kyc",
+    },
+    wallet_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "wallet",
+    },
+    crypto_address_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "crypto-address",
+    },
     date: {
       type: Number,
       default: new Date().getTime(),
@@ -143,8 +155,6 @@ const contactSchema = new mongoose.Schema(
   },
   { versionKey: false, timestamps: true }
 );
-
-// indexing for get contact api
 
 const ContactModel = mongoose.model("contact", contactSchema);
 

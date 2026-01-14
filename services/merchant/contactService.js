@@ -3,6 +3,16 @@ const {
   ContactTypeModel,
   ContactModel,
 } = require("../../models/merchant/contactModel");
+const {
+  MerchantCryptoAddressModel,
+} = require("../../models/merchant/cryptoAddressModel");
+const { MerchantKycModel } = require("../../models/merchant/kycModel");
+const { MerchantWalletModel } = require("../../models/merchant/walletModel");
+const AppError = require("../../utils/AppError");
+const {
+  generateMerchantCryptoAddressData,
+} = require("./cryptoAddressServices");
+const { merchantWalletData } = require("./walletServices");
 
 //conatct types realted
 exports.createContactType = (object) => {
@@ -50,10 +60,6 @@ exports.updateAllContactTypesByFilter = (
 };
 
 // conatcts realted
-exports.createContact = (object) => {
-  return ContactModel.create(object);
-};
-
 exports.getContactById = (id, projections = null, options = {}) => {
   return ContactModel.findById(id, projections, options);
 };
@@ -194,4 +200,81 @@ exports.getAllSingleContacts = (options) => {
   ];
 
   return ContactModel.aggregate(pipeline).allowDiskUse(true);
+};
+
+exports.createContact = async (payload, session) => {
+  try {
+    // create contact instance
+    let contactInstance = new ContactModel({
+      ...payload,
+    });
+
+    // create kyc instance
+    const kycInstance = new MerchantKycModel({
+      user_id: contactInstance._id,
+      email: contactInstance.user_email,
+      user_category: "contact",
+      user_type: "INDIVIDUAL",
+    });
+
+    // create wallet instance
+    const walletData = await merchantWalletData();
+    if (walletData.error) throw new AppError(400, walletData.message);
+    const walletInstance = new MerchantWalletModel({
+      user_id: contactInstance._id,
+      email: contactInstance.user_email,
+      user_category: "contact",
+      ...walletData.data,
+    });
+
+    // create crypto address instance
+    const cryptoAddressData = await generateMerchantCryptoAddressData();
+    if (cryptoAddressData.error)
+      throw new AppError(400, "Failed to generate crypto address");
+    const cryptoAddressInstance = new MerchantCryptoAddressModel({
+      user_id: contactInstance._id,
+      email: contactInstance.user_email,
+      user_category: "contact",
+      ...cryptoAddressData.data,
+    });
+
+    // update contact instance
+    contactInstance.kyc_id = kycInstance._id;
+    contactInstance.wallet_id = walletInstance._id;
+    contactInstance.crypto_address_id = cryptoAddressInstance._id;
+
+    // save all documents
+    const contact = await contactInstance.save({ session });
+    const kyc = await kycInstance.save({ session });
+    const wallet = await walletInstance.save({ session });
+    const cryptoAddress = await cryptoAddressInstance.save({ session });
+
+    if (!contact || !cryptoAddress || !kyc || !wallet) {
+      throw new AppError(
+        400,
+        `Error in creating contact ${
+          !wallet
+            ? "wallet"
+            : !cryptoAddress
+            ? "crypto address"
+            : kyc
+            ? "kyc"
+            : ""
+        }`
+      );
+    }
+
+    return {
+      message: "Contact created successfull",
+      error: false,
+      data: contact,
+    };
+  } catch (err) {
+    console.log("err",err)
+    return {
+      message: err?.message || "Failed to create contact",
+      error: true,
+      data: null,
+    };
+  }
 };

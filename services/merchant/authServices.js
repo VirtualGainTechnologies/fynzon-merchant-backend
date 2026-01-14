@@ -124,23 +124,25 @@ exports.registerMerchant = async (req_body, session) => {
 
     // create kyc instance
     const kycInstance = new MerchantKycModel({
-      merchant_id: merchantInstance._id,
+      user_id: merchantInstance._id,
       email: merchantInstance.email,
-      merchant_type: merchantInstance.merchant_type,
+      user_category: "merchant",
+      user_type: merchantInstance.merchant_type,
     });
 
     // create wallet instance
     const walletData = await merchantWalletData();
     if (walletData.error) throw new AppError(400, walletData.message);
     const walletInstance = new MerchantWalletModel({
-      merchant_id: merchantInstance._id,
+      user_id: merchantInstance._id,
       email: merchantInstance.email,
+      user_category: "merchant",
       ...walletData.data,
     });
 
     // create merchant developer instance
     const apiSettingInstance = new MerchantApiSettingModel({
-      merchant_id: merchantInstance._id,
+      user_id: merchantInstance._id,
       email: merchantInstance.email,
     });
 
@@ -149,8 +151,9 @@ exports.registerMerchant = async (req_body, session) => {
     if (cryptoAddressData.error)
       throw new AppError(400, "Failed to generate crypto address");
     const cryptoAddressInstance = new MerchantCryptoAddressModel({
-      merchant_id: merchantInstance._id,
+      user_id: merchantInstance._id,
       email: merchantInstance.email,
+      user_category: "merchant",
       ...cryptoAddressData.data,
     });
 

@@ -3,14 +3,18 @@ const validator = require("validator");
 
 const kycSchema = new mongoose.Schema(
   {
-    merchant_id: {
+    user_id: {
       type: mongoose.Schema.Types.ObjectId,
       trim: true,
-      ref: "merchant",
-      required: [true, "merchant_id is required field"],
+      refPath: "user_category",
+      required: [true, "user_id is required field"],
     },
-
-    merchant_type: {
+    user_category: {
+      type: String,
+      enum: ["merchant", "contact"],
+      required: [true, "user_category is required field"],
+    },
+    user_type: {
       type: String,
       trim: true,
       enum: {

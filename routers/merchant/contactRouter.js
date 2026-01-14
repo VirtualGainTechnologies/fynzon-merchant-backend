@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const { body, query } = require("express-validator");
 
-const { catchAsync } = require("../../utils/catchAsync");
+const { catchAsync, catchAsyncWithSession } = require("../../utils/catchAsync");
 const {
   verifyMerchantToken,
 } = require("../../middlewares/merchant/verifyMerchantToken");
@@ -74,8 +74,7 @@ const createOrUpdateContactValidator = [
     .notEmpty()
     .withMessage("The field email is required")
     .isEmail()
-    .withMessage("Invalid email id")
-    .toLowerCase(),
+    .withMessage("Invalid email id"),
   body("phone")
     .trim()
     .optional({ checkFalsy: true })
@@ -119,7 +118,7 @@ const createOrUpdateContactValidator = [
     .trim()
     .if(body("action").equals("CREATE"))
     .notEmpty()
-    .withMessage("The field full_address is required"),
+    .withMessage("The field fullAddress is required"),
 ];
 
 const modeQueryValidator = [
@@ -152,7 +151,7 @@ router
     "/upsert-contact",
     createOrUpdateContactValidator,
     catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
-    catchAsync("createOrUpdateContact api", createOrUpdateContact)
+    catchAsyncWithSession("createOrUpdateContact api", createOrUpdateContact)
   )
   .get(
     "/all-contacts",

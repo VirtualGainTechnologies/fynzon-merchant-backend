@@ -12,9 +12,9 @@ const invoiceSchema = new mongoose.Schema(
     merchant_email: {
       type: String,
       trim: true,
-      required: [true, "The field user_email is required"],
+      required: [true, "The field merchant_email is required"],
       lowercase: true,
-      validate: [validator.isEmail, "The field user_email is invalid"],
+      validate: [validator.isEmail, "The field merchant_email is invalid"],
     },
     mode: {
       type: String,
@@ -150,7 +150,7 @@ const invoiceSchema = new mongoose.Schema(
     invoice_discription: {
       type: String,
       trim: true,
-      required: [true, "The field invoice_number is required"],
+      required: [true, "The field invoice_discription is required"],
       minlength: [10, "Invoice description must be at least 10 characters"],
       maxlength: [100, "Invoice description cannot exceed 100 characters"],
     },

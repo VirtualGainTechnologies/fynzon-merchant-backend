@@ -7,11 +7,12 @@ const { buildCronPattern } = require("../../utils/dateHelper");
 exports.scheduleInvoiceIssue = async (data) => {
   try {
     const { issue_date, _id, tz = "UTC" } = data;
+    const jobId = String(`issue-invoice-${_id}`);
     await invoiceQueue.add(
       "ISSUE_INVOICE",
       { _id, tz },
       {
-        jobId: String(`issue-invoice-${_id}`),
+        jobId,
         removeOnComplete: true,
         removeOnFail: true,
         delay: Math.max(
