@@ -139,7 +139,6 @@ const invoiceSchema = new mongoose.Schema(
       expiry_days: {
         type: Number,
         min: 1,
-        default: 1,
       },
     },
     invoice_type: {

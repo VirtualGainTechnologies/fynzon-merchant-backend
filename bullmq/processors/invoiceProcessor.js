@@ -21,7 +21,7 @@ exports.handleIssueInvoice = async (jobData) => {
     // get invoice
     const invoice = await getInvoiceById(
       _id,
-      "due_date invoice_number invoice_type contact_name contact_type contact_email contact_phone address merchant_id merchant_email mode items discount_percentage tax_percentage total_amount base_currency recurring issue_date conversion_rate deposit_network deposit_crypto",
+      "due_date invoice_number invoice_type contact_name contact_type contact_email contact_phone address merchant_id merchant_email mode items discount_percentage tax_percentage total_amount base_currency recurring issue_date conversion_rate deposit_network deposit_crypto deposit_address",
       { lean: true }
     );
     if (!invoice) {

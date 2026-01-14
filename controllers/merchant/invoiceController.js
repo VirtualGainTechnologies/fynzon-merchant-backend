@@ -36,7 +36,7 @@ exports.createInvoice = async (req, res) => {
     isDrafted,
     invoiceType,
     recurring,
-    timezone = "UTC",
+    timezone,
   } = req.body;
 
   const invoice = await createInvoiceDoc({

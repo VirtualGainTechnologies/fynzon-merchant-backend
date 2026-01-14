@@ -63,13 +63,13 @@ const generateInvoiceHtml = async (data) => {
       subtotal += itemTotal;
       return `
       <tr style="height: 30px;">
-        <td style="text-align: center; border-top: 1px solid grey;">${
+        <td style="text-align: start; border-top: 1px solid grey;">${
           item.name || "Item"
         }</td>
         <td style="text-align: center; border-top: 1px solid grey;">${
           item.quantity
         }</td>
-        <td style="text-align: center; border-top: 1px solid grey;">${item.price.toFixed(
+        <td style="text-align: center; border-top: 1px solid grey; ">${item.price.toFixed(
           2
         )}</td>
         <td style="text-align: center; border-top: 1px solid grey;">${itemTotal.toFixed(
@@ -100,8 +100,13 @@ const generateInvoiceHtml = async (data) => {
   <!-- Header -->
   <div style="display: flex; justify-content: space-between; align-items: center;">
     <div style="font-size: 32px; font-weight: 600;">Invoice</div>
-    <!-- You can add logo here if you want -->
-    <!-- <img src="https://fynzon-test-public-files.s3.ap-south-1.amazonaws.com/image-15-11-2024-105-fynzonlogo_2png" alt="Fynzon Logo" style="height: 60px;" /> -->
+      <img
+      src="https://fynzon-test-public-files.s3.ap-south-1.amazonaws.com/image-15-11-2024-105-fynzonlogo_2png"
+      alt="company_logo"
+      width="30"
+      height="30"
+    />
+
   </div>
 
   <hr style="margin: 15px 0;" />
@@ -162,8 +167,8 @@ const generateInvoiceHtml = async (data) => {
       border-bottom: 1px solid grey;
       font-size: 10px;
     ">
-      <tr style="height: 30px; background-color: aliceblue;">
-        <th style="text-align: center; border-top: 1px solid grey;">Item</th>
+      <tr style="height: 30px; background-color: aliceblue; ">
+        <th style="text-align: start; border-top: 1px solid grey;">Item</th>
         <th style="text-align: center; border-top: 1px solid grey;">Quantity</th>
         <th style="text-align: center; border-top: 1px solid grey;">Price Per Quantity</th>
         <th style="text-align: center; border-top: 1px solid grey;">Total (${base_currency})</th>

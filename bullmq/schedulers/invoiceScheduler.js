@@ -16,7 +16,9 @@ exports.scheduleInvoiceIssue = async (data) => {
         removeOnComplete: true,
         removeOnFail: true,
         delay: Math.max(
-          moment(issue_date).tz(tz).startOf("day").diff(moment().tz(tz)),
+          moment(issue_date, "YYYY-MM-DD", true, tz)
+            .startOf("day")
+            .diff(moment().tz(tz)),
           0
         ),
         attempts: 3,
@@ -80,7 +82,10 @@ exports.scheduleInvoiceExpiry = async (data) => {
         removeOnComplete: true,
         removeOnFail: true,
         delay: Math.max(
-          moment(due_date).tz(tz).endOf("day").diff(moment().tz(tz)),
+          moment
+            .tz(due_date, "YYYY-MM-DD", true, tz)
+            .endOf("day")
+            .diff(moment().tz(tz)),
           0
         ),
         attempts: 3,

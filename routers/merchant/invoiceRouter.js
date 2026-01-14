@@ -92,26 +92,35 @@ const createInvoiceValidator = [
     ),
   // invoice info
   body("issueDate")
-    .if((_, { req }) => req.body.invoiceType === "SCHEDULED")
+    .if((_value, { req }) =>
+      ["INSTANT", "SCHEDULED"].includes(req.body.invoiceType)
+    )
     .notEmpty()
     .withMessage("The field issueDate is required")
     .custom((value, { req }) => {
-      if (["RECURRING", "INSTANT"].includes(req.body.invoiceType)) {
-        return true;
-      }
-
+      if (req.body.invoiceType == "RECURRING") return true;
       // validate issue date
       const tz = req.body.timezone || "Asia/Kolkata";
       const issue = moment.tz(value, "YYYY-MM-DD", true, tz);
       if (!issue.isValid()) {
         throw new Error("Invalid issueDate format (YYYY-MM-DD)");
       }
+      const today = moment().tz(tz).startOf("day");
+
+      // instant invoice rule
+      if (req.body.invoiceType == "INSTANT") {
+        if (!issue.isSame(today, "day")) {
+          throw new Error("Issue date must be today for instant invoice");
+        }
+      }
+
       // scheduled invoice rule
-      const today = moment.tz(tz).startOf("day");
-      if (!issue.isAfter(today, "day")) {
-        throw new Error(
-          "Issue date must be a future date for scheduled invoice"
-        );
+      if (req.body.invoiceType == "SCHEDULED") {
+        if (!issue.isAfter(today, "day")) {
+          throw new Error(
+            "Issue date must be a future date for scheduled invoice"
+          );
+        }
       }
       return true;
     }),
@@ -273,7 +282,24 @@ const createInvoiceValidator = [
     .notEmpty()
     .withMessage("Recurring expiry days is required")
     .isInt({ min: 1 })
-    .withMessage("Recurring expiry days must be a positive number"),
+    .withMessage("Recurring expiry days must be a positive number")
+    .custom((value, { req }) => {
+      const every = req.body.recurring?.every;
+      if (!every) return true;
+      const limits = {
+        week: 6,
+        month: 27,
+        year: 363,
+      };
+      const max = limits[every];
+      if (!max) return true;
+      if (Number(value) > max) {
+        throw new Error(
+          `Expiry days cannot exceed ${max} days for ${every} interval`
+        );
+      }
+      return true;
+    }),
 ];
 
 const sendInvoiceEmailValidator = [
