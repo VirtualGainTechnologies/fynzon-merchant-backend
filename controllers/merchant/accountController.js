@@ -91,7 +91,7 @@ exports.changeMobileNumber = async (req, session) => {
 
   // upadte mobile
   const updatedMerchant = await updateMerchantById(
-    req.user_id,
+    req.userId,
     {
       phone_code: req_body.phoneCode,
       phone: req_body.phone,
