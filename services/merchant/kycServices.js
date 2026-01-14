@@ -51,7 +51,7 @@ exports.getAllMerchantKycByFilter = (options) => {
     {
       $lookup: {
         from: "merchant",
-        let: { merchantId: "$merchant_id" },
+        let: { merchantId: "$user_id" },
         pipeline: [
           { $match: { $expr: { $eq: ["$_id", "$$merchantId"] } } },
           { $project: { _id: 0, full_name: 1, business_name: 1 } },
@@ -90,13 +90,13 @@ exports.getAllMerchantKycByFilter = (options) => {
             $project: {
               _id: 1,
               createdAt: 1,
-              merchant_type: 1,
+              user_type: 1,
               email: 1,
               kycStatus: "$kyc_status",
 
               merchantName: {
                 $cond: {
-                  if: { $eq: ["$merchant_type", "INDIVIDUAL"] },
+                  if: { $eq: ["$user_type", "INDIVIDUAL"] },
                   then: {
                     $cond: {
                       if: {
@@ -133,7 +133,7 @@ exports.getAllMerchantKycByFilter = (options) => {
 
               aadhaar: {
                 $cond: [
-                  { $eq: ["$merchant_type", "INDIVIDUAL"] },
+                  { $eq: ["$user_type", "INDIVIDUAL"] },
                   {
                     registeredName: { $ifNull: ["$aadhaar.name", "N/A"] },
                     aadhaarNumber: {
@@ -236,7 +236,7 @@ exports.getAllMerchantKycByFilter = (options) => {
 
               selfie: {
                 $cond: [
-                  { $eq: ["$merchant_type", "INDIVIDUAL"] },
+                  { $eq: ["$user_type", "INDIVIDUAL"] },
                   {
                     selfieImage: { $ifNull: ["$selfie.selfie_image", "N/A"] },
                     status: { $ifNull: ["$selfie.status", "PENDING"] },
@@ -247,7 +247,7 @@ exports.getAllMerchantKycByFilter = (options) => {
 
               gstin: {
                 $cond: [
-                  { $eq: ["$merchant_type", "ENTITY"] },
+                  { $eq: ["$user_type", "ENTITY"] },
                   {
                     gstinNumber: { $ifNull: ["$gstin.gstin_number", "N/A"] },
                     businessName: {

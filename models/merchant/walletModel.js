@@ -147,7 +147,7 @@ const walletSchema = new mongoose.Schema(
   { versionKey: false, timestamps: true }
 );
 
-walletSchema.index({ merchant_id: 1 });
+walletSchema.index({ user_id: 1 });
 
 const MerchantWalletModel = mongoose.model("wallet", walletSchema);
 module.exports = {

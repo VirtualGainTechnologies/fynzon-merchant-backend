@@ -22,7 +22,7 @@ exports.verifyMerchantToken = async (req, res, next) => {
   // get merchant based on token
   const merchant = await getMerchantByFilter(
     { token },
-    "_id email phone_code phone is_blocked full_name merchant_type business_name  onboarding_mode live_onboarding_enabled",
+    "_id email phone_code phone is_blocked full_name user_type business_name  onboarding_mode live_onboarding_enabled",
     {
       lean: true,
     }
@@ -52,13 +52,13 @@ exports.verifyMerchantToken = async (req, res, next) => {
     throw new AppError(401, "No kyc data found");
   }
 
-  req.merchantId = merchant._id;
+  req.userId = merchant._id;
   req.email = merchant.email;
   req.phoneCode = merchant.phone_code;
   req.phone = merchant.phone;
   req.fullName = merchant.full_name;
   req.businessName = merchant.business_name;
-  req.merchantType = merchant.merchant_type;
+  req.userType = merchant.user_type;
   req.kycStatus = kycData.kyc_status;
   req.onboradingMode = merchant.onboarding_mode;
   req.isLiveModeEnabled = merchant.live_onboarding_enabled;

@@ -17,7 +17,7 @@ exports.generateApiKey = async (req, res) => {
 
   // check if API keys exist
   const apiKeys = await getApiSettingByFilter(
-    { merchant_id: req.merchantId },
+    { user_id: req.userId },
     `_id ${keyType}`,
     { lean: true }
   );
@@ -42,7 +42,7 @@ exports.generateApiKey = async (req, res) => {
   };
 
   const updatedKeys = await updateApiSettingByFilter(
-    { merchant_id: req.merchantId },
+    { user_id: req.userId },
     updateObj,
     { new: true, upsert: true }
   );
@@ -89,7 +89,7 @@ exports.deleteApiKey = async (req, res) => {
       : { $unset: { live_api_key: 1 } };
 
   const deletedApiKey = await updateApiSettingByFilter(
-    { merchant_id: req.merchantId },
+    { user_id: req.userId },
     deleteObj,
     { new: true }
   );
@@ -123,7 +123,7 @@ exports.sendOtpToAddIp = async (req, res) => {
 
   // chekc api key for that mode exists or not
   const developerInfo = await getApiSettingByFilter(
-    { merchant_id: req.merchantId },
+    { user_id: req.userId },
     "_id test_ip live_ip live_api_key test_api_key",
     { lean: true }
   );
@@ -200,7 +200,7 @@ exports.verifyOtpToAddIp = async (req, res) => {
   }
 
   const developerInfo = await getApiSettingByFilter(
-    { merchant_id: req.merchantId },
+    { user_id: req.userId },
     "_id test_ip live_ip live_api_key test_api_key",
     { lean: true }
   );
@@ -240,7 +240,7 @@ exports.verifyOtpToAddIp = async (req, res) => {
   });
 
   const updatedIpAllowlist = await updateApiSettingByFilter(
-    { merchant_id: req.merchantId },
+    { user_id: req.userId },
     { $push: { [`${mode.toLowerCase()}_ip`]: { $each: requestedIps } } },
     { new: true }
   );
@@ -448,7 +448,7 @@ exports.verifyOtpToRemoveIp = async (req, res) => {
   }
 
   const deletedIp = await updateApiSettingByFilter(
-    { merchant_id: req.merchantId },
+    { user_id: req.userId },
     {
       $pull: {
         [`${mode.toLowerCase()}_ip`]: { ip_address: ipAddress },
@@ -486,7 +486,7 @@ exports.addWebHookUrl = async (req, res) => {
 
   // check api key and ip address already exists or not
   const developerInfo = await getApiSettingByFilter(
-    { merchant_id: req.merchantId },
+    { user_id: req.userId },
     "_id test_ip live_ip live_api_key test_api_key",
     { lean: true }
   );
@@ -525,7 +525,7 @@ exports.addWebHookUrl = async (req, res) => {
   }
 
   const updateUrl = await updateApiSettingByFilter(
-    { merchant_id: req.merchantId },
+    { user_id: req.userId },
     {
       $push: {
         [webhookType]: {
@@ -671,7 +671,7 @@ exports.removeWebHookUrl = async (req, res) => {
 
   // remove url
   const removeUrl = await updateApiSettingByFilter(
-    { Merchant_id: req.MerchantId },
+    { user_id: req.userId },
     {
       $pull: {
         [webhookType]: {
@@ -704,7 +704,7 @@ exports.removeWebHookUrl = async (req, res) => {
 // developer data
 exports.getDeveloperData = async (req, res) => {
   const apiSettingInfo = await getApiSettingByFilter(
-    { merchant_id: req.merchantId },
+    { user_id: req.userId },
     "live_api_key test_api_key test_ip live_ip test_webhook_url live_webhook_url",
     { lean: true }
   );

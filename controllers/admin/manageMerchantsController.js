@@ -55,7 +55,7 @@ exports.updateMerchantData = async (req, session) => {
 
   // update user data
   const updatedMerchantData = await updateMerchantById(
-    new mongoose.Types.ObjectId(req.params?.merchantId),
+    new mongoose.Types.ObjectId(req.params?.userId),
     {
       ...(merchantStatus && {
         is_blocked: merchantStatus == "ACTIVE" ? false : true,
@@ -117,7 +117,7 @@ exports.updateMerchantData = async (req, session) => {
     error: false,
     data: {
       _id: updatedMerchantData._id,
-      merchant_type: updatedMerchantData.merchant_type,
+      user_type: updatedMerchantData.user_type,
       email: updatedMerchantData.email,
       business_name: updatedMerchantData.business_name,
       business_category: updatedMerchantData.business_category,

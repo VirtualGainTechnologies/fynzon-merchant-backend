@@ -32,7 +32,7 @@ const formatRemainingLockoutTime = (lockoutEndTime) => {
 exports.checkMerchantLoginAttempts = async (req, res, next) => {
   const merchant = await getMerchantByFilter(
     { email: req.body.email },
-    "_id email phone_code phone is_blocked password incorrect_login_count last_failed_login_at full_name business_name merchant_type",
+    "_id email phone_code phone is_blocked password incorrect_login_count last_failed_login_at full_name business_name user_type",
     {}
   );
 
@@ -104,7 +104,7 @@ exports.checkMerchantLoginAttempts = async (req, res, next) => {
       if (attemptsLeft == 0) {
         const emailObject = {
           userName:
-            updatedMerchant.merchant_type === "ENTITY"
+            updatedMerchant.user_type === "ENTITY"
               ? updatedMerchant.business_name
               : updatedMerchant.full_name,
           lockoutTime: parseInt(process.env.LOCKOUT_DURATION_HOURS) || 24,

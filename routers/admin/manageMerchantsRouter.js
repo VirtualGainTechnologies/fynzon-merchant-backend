@@ -12,7 +12,7 @@ const {
 const { catchAsync, catchAsyncWithSession } = require("../../utils/catchAsync");
 
 const updateMerchantDataValidator = [
-  param("merchantId").notEmpty().withMessage("Merchant id missing in path"),
+  param("userId").notEmpty().withMessage("Merchant id missing in path"),
   body("merchantStatus")
     .optional()
     .isString()
@@ -113,7 +113,7 @@ router.get(
 );
 
 router.put(
-  "/update/:merchantId",
+  "/update/:userId",
   updateMerchantDataValidator,
   catchAsync("verifyAdminToken middleware", verifyAdminToken),
   catchAsyncWithSession("updateMerchantData api", updateMerchantData)

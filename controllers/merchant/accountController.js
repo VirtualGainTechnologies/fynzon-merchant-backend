@@ -91,7 +91,7 @@ exports.changeMobileNumber = async (req, session) => {
 
   // upadte mobile
   const updatedMerchant = await updateMerchantById(
-    req.merchantId,
+    req.user_id,
     {
       phone_code: req_body.phoneCode,
       phone: req_body.phone,
@@ -104,7 +104,7 @@ exports.changeMobileNumber = async (req, session) => {
   }
 
   let kycStatus = req.kycStatus;
-  if (updatedMerchant.merchant_type === "INDIVIDUAL") {
+  if (updatedMerchant.user_type === "INDIVIDUAL") {
     // update kyc
     const updateAaadharObj = {
       "aadhaar.front_image": "",
@@ -163,7 +163,7 @@ exports.changeMobileNumber = async (req, session) => {
     };
 
     const updatedKyc = await updateMerchantKycByFilter(
-      { merchant_id: req.merchantId },
+      { user_id: req.userId },
       {
         ...updateAaadharObj,
         ...updatePanObj,
@@ -181,7 +181,7 @@ exports.changeMobileNumber = async (req, session) => {
   }
 
   const response = {
-    merchantType: updatedMerchant.merchant_type,
+    userType: updatedMerchant.user_type,
     businessName: updatedMerchant.business_name,
     businessCategory: updatedMerchant.business_category,
     fullName: updatedMerchant.full_name,
@@ -239,7 +239,7 @@ exports.sendEmailOtpForEmailChange = async (req, res) => {
   // check email already exist or not
   const isEmailExist = await getMerchantByFilter(
     { email: req_body.email },
-    "_id merchant_type full_name phone",
+    "_id user_type full_name phone",
     {
       lean: true,
     }
@@ -278,7 +278,7 @@ exports.changeEmailId = async (req, session) => {
 
   // upadte merchant
   const updatedMerchant = await updateMerchantById(
-    req.merchantId,
+    req.userId,
     {
       email: req_body.email,
     },
@@ -292,7 +292,7 @@ exports.changeEmailId = async (req, session) => {
   // update wallet
   const updatedWallet = await updateMerchantWalletByFilter(
     {
-      merchant_id: req.merchantId,
+      user_id: req.userId,
     },
     { email: req_body.email },
     { new: true, session }
@@ -305,7 +305,7 @@ exports.changeEmailId = async (req, session) => {
   // update kyc
   const updatedKyc = await updateMerchantKycByFilter(
     {
-      merchant_id: req.merchantId,
+      user_id: req.userId,
     },
     { email: req_body.email },
     { new: true, session }
@@ -319,7 +319,7 @@ exports.changeEmailId = async (req, session) => {
     message: "Email updated successfully",
     error: false,
     data: {
-      merchantType: updatedMerchant.merchant_type,
+      userType: updatedMerchant.user_type,
       businessName: updatedMerchant.business_name,
       businessCategory: updatedMerchant.business_category,
       fullName: updatedMerchant.full_name,
@@ -421,7 +421,7 @@ exports.updatePassword = async (req, res) => {
 exports.getAccountData = async (req, res) => {
   const kycData = await getMerchantKycByFilter(
     {
-      merchant_id: req.merchantId,
+      user_id: req.userId,
     },
     "aadhaar pan bank gstin selfie kyc_status",
     { lean: true }

@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 
 const merchantSchema = new mongoose.Schema(
   {
-    merchant_type: {
+    user_type: {
       type: String,
       trim: true,
       enum: {
@@ -28,7 +28,7 @@ const merchantSchema = new mongoose.Schema(
       lowercase: true,
       required: [
         function () {
-          return this.merchant_type === "ENTITY";
+          return this.user_type === "ENTITY";
         },
         "Business name is required field",
       ],
@@ -48,7 +48,7 @@ const merchantSchema = new mongoose.Schema(
       trim: true,
       required: [
         function () {
-          return this.merchant_type === "INDIVIDUAL";
+          return this.user_type === "INDIVIDUAL";
         },
         "Full name is required field",
       ],
@@ -58,7 +58,7 @@ const merchantSchema = new mongoose.Schema(
       trim: true,
       required: [
         function () {
-          return this.merchant_type === "INDIVIDUAL";
+          return this.user_type === "INDIVIDUAL";
         },
         "Profession is required field",
       ],

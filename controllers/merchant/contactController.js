@@ -20,7 +20,7 @@ exports.createContactType = async (req, res) => {
 
   // fetch merchant document first
   const contactTypes = await getContactTypeByFilter(
-    { merchant_id: req.merchantId },
+    { merchant_id: req.userId },
     "_id contact_types",
     { lean: true }
   );
@@ -61,9 +61,9 @@ exports.createContactType = async (req, res) => {
 
   // Upsert: update if exists, insert if not
   const createdContact = await updateContactTypeByFilter(
-    { merchant_id: req.merchantId },
+    { merchant_id: req.userId },
     {
-      merchant_id: req.merchantId,
+      merchant_id: req.userId,
       merchant_email: req.email,
       $push: {
         contact_types: {
@@ -83,7 +83,7 @@ exports.createContactType = async (req, res) => {
 
   const contactTypesData = await getAllContactTypesByMode({
     mode,
-    merchantId: req.merchantId,
+    merchantId: req.userId,
   });
 
   if (!contactTypesData) {
@@ -106,7 +106,7 @@ exports.getContactTypes = async (req, res) => {
 
   const contactTypesData = await getAllContactTypesByMode({
     mode,
-    merchantId: req.merchantId,
+    merchantId: req.userId,
   });
 
   if (!contactTypesData) {
@@ -133,7 +133,7 @@ exports.createOrUpdateContact = async (req, session) => {
   }
 
   const query = {
-    merchant_id: req.merchantId,
+    merchant_id: req.userId,
     mode: req_body.mode,
     ...((req_body?.email || req_body?.phone) && {
       $or: [
@@ -166,7 +166,7 @@ exports.createOrUpdateContact = async (req, session) => {
 
   const payload = {
     ...(req_body.action === "CREATE" && {
-      merchant_id: req.merchantId,
+      merchant_id: req.userId,
       merchant_email: req.email,
       date: new Date().getTime(),
       user_email: req_body.email,
@@ -209,7 +209,7 @@ exports.createOrUpdateContact = async (req, session) => {
     // update existing contact
     contactData = await updateContactByFilter(
       {
-        merchant_id: req.merchantId,
+        merchant_id: req.userId,
         user_email: req_body.email,
       },
       payload,
@@ -252,7 +252,7 @@ exports.createOrUpdateContact = async (req, session) => {
 exports.getAllContacts = async (req, res) => {
   const { mode = "LIVE", contactType = "ALL", searchValue = null } = req.query;
   const contactsData = await getAllSingleContacts({
-    merchant_id: req.merchantId,
+    merchant_id: req.userId,
     mode,
     contactType,
     ...(searchValue && {

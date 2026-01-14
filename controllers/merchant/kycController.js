@@ -44,13 +44,13 @@ exports.verifyAadhaar = async (req, res, next) => {
         throw new AppError(400, "Upload both sides of aadhaar card");
       }
 
-      if (req.merchantType !== "INDIVIDUAL") {
+      if (req.userType !== "INDIVIDUAL") {
         throw new AppError(400, "Merchant must be of individual type");
       }
 
       const kycData = await getMerchantKycByFilter(
         {
-          merchant_id: req.merchantId,
+          user_id: req.userId,
         },
         {
           "aadhaar.aadhaar_number": 1,
@@ -242,7 +242,7 @@ exports.verifyAadhaar = async (req, res, next) => {
       };
 
       const updatedKyc = await updateMerchantKycByFilter(
-        { merchant_id: req.merchantId },
+        { user_id: req.userId },
         updateObj,
         { new: true }
       );
@@ -309,13 +309,13 @@ exports.verifyGstin = async (req, res, next) => {
     } else {
       const req_body = Object.assign({}, req.body);
 
-      if (req.merchantType !== "ENTITY") {
+      if (req.userType !== "ENTITY") {
         throw new AppError(400, "Merchant must be of entity type");
       }
 
       // check gstin already exists or not
       const kycData = await getMerchantKycByFilter(
-        { merchant_id: req.merchantId },
+        { user_id: req.userId },
         {
           "gstin.gstin_number": 1,
           "pan.is_pan_verified": 1,
@@ -421,7 +421,7 @@ exports.verifyGstin = async (req, res, next) => {
       };
 
       const updatedKyc = await updateMerchantKycByFilter(
-        { merchant_id: req.merchantId },
+        { user_id: req.userId },
         updateObj,
         { new: true }
       );
@@ -486,13 +486,13 @@ exports.verifyIndividualPan = async (req, res, next) => {
         throw new AppError(400, "PAN image is missing");
       }
 
-      if (req.merchantType !== "INDIVIDUAL") {
+      if (req.userType !== "INDIVIDUAL") {
         throw new AppError(400, "Merchant must be of individual type");
       }
 
       const kycData = await getMerchantKycByFilter(
         {
-          merchant_id: req.merchantId,
+          user_id: req.userId,
         },
         {
           "pan.pan_number": 1,
@@ -683,7 +683,7 @@ exports.verifyIndividualPan = async (req, res, next) => {
 
       const updatedKyc = await updateMerchantKycByFilter(
         {
-          merchant_id: req.merchantId,
+          user_id: req.userId,
         },
         updateObj,
         { new: true }
@@ -760,13 +760,13 @@ exports.verifyBusinessPan = async (req, res, next) => {
         throw new AppError(400, "PAN image is missing");
       }
 
-      if (req.merchantType !== "ENTITY") {
+      if (req.userType !== "ENTITY") {
         throw new AppError(400, "Merchant must be of entity type");
       }
 
       const kycData = await getMerchantKycByFilter(
         {
-          merchant_id: req.merchantId,
+          user_id: req.userId,
         },
         {
           "pan.pan_number": 1,
@@ -965,7 +965,7 @@ exports.verifyBusinessPan = async (req, res, next) => {
 
       const updatedKyc = await updateMerchantKycByFilter(
         {
-          merchant_id: req.merchantId,
+          user_id: req.userId,
         },
         updateObj,
         { new: true }
@@ -1044,7 +1044,7 @@ exports.verifyBank = async (req, res, next) => {
 
       const kycData = await getMerchantKycByFilter(
         {
-          merchant_id: req.merchantId,
+          user_id: req.userId,
         },
         {
           "bank.account_number": 1,
@@ -1066,7 +1066,7 @@ exports.verifyBank = async (req, res, next) => {
       }
 
       if (
-        req.merchantType === "INDIVIDUAL" &&
+        req.userType === "INDIVIDUAL" &&
         (!kycData.aadhaar?.is_aadhaar_verified || !kycData.pan?.is_pan_verified)
       ) {
         const message =
@@ -1080,7 +1080,7 @@ exports.verifyBank = async (req, res, next) => {
       }
 
       if (
-        req.merchantType === "ENTITY" &&
+        req.userType === "ENTITY" &&
         (!kycData.gstin?.is_gstin_verified || !kycData.pan?.is_pan_verified)
       ) {
         const message =
@@ -1176,7 +1176,7 @@ exports.verifyBank = async (req, res, next) => {
       );
       // check bank and gstin belongs to same person or not
       if (
-        req.merchantType === "ENTITY" &&
+        req.userType === "ENTITY" &&
         name.toUpperCase() !=
           (kycData.gstin?.legal_name_of_business?.toUpperCase() ||
             kycData.gstin?.trade_name_of_business?.toUpperCase())
@@ -1257,12 +1257,12 @@ exports.verifyBank = async (req, res, next) => {
         "bank.status": "VERIFIED",
         "bank.is_bank_verified": true,
         kyc_status:
-          req.merchantType === "INDIVIDUAL" &&
+          req.userType === "INDIVIDUAL" &&
           kycData?.aadhaar.is_aadhaar_verified &&
           kycData?.pan.is_pan_verified &&
           kycData?.selfie.is_selfie_verified
             ? "VERIFIED"
-            : req.merchantType === "ENTITY" &&
+            : req.userType === "ENTITY" &&
               kycData?.gstin.is_gstin_verified &&
               kycData?.pan.is_pan_verified
             ? "VERIFIED"
@@ -1270,7 +1270,7 @@ exports.verifyBank = async (req, res, next) => {
       };
 
       const updatedKyc = await updateMerchantKycByFilter(
-        { merchant_id: req.merchantId },
+        { user_id: req.userId },
         updateObj,
         { new: true }
       );
@@ -1287,7 +1287,7 @@ exports.verifyBank = async (req, res, next) => {
 
       // send email
       if (
-        req.merchantType === "ENTITY" &&
+        req.userType === "ENTITY" &&
         updatedKyc.kyc_status === "VERIFIED"
       ) {
         const emailObject = {
@@ -1363,13 +1363,13 @@ exports.verifySelfie = async (req, res, next) => {
         throw new AppError(400, "Selfie is missing");
       }
 
-      if (req.merchantType !== "INDIVIDUAL") {
+      if (req.userType !== "INDIVIDUAL") {
         throw new AppError(400, "Merchant must be of individual type");
       }
 
       const kycData = await getMerchantKycByFilter(
         {
-          merchant_id: req.merchantId,
+          user_id: req.userId,
         },
         {
           "selfie?.selfie_image": 1,
@@ -1482,7 +1482,7 @@ exports.verifySelfie = async (req, res, next) => {
       };
 
       const updatedKyc = await updateMerchantKycByFilter(
-        { merchant_id: req.merchantId },
+        { user_id: req.userId },
         updateObj,
         { new: true }
       );

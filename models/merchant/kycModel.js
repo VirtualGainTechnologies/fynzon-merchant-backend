@@ -21,7 +21,7 @@ const kycSchema = new mongoose.Schema(
         values: ["INDIVIDUAL", "ENTITY"],
         message: "{value} is not suported",
       },
-      required: [true, "merchant_type is required field"],
+      required: [true, "user_type is required field"],
     },
     email: {
       type: String,

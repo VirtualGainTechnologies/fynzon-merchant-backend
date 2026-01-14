@@ -121,7 +121,7 @@ exports.verifyRegistrationOtp = async (req, session) => {
   const registerData = registerDetails.data;
 
   const response = {
-    merchantType: registerData.merchant_type,
+    userType: registerData.user_type,
     businessName: registerData.business_name,
     businessCategory: registerData.business_category,
     fullName: registerData.full_name,
@@ -139,7 +139,7 @@ exports.verifyRegistrationOtp = async (req, session) => {
 
   const emailObject = {
     userName:
-      registerData.merchant_type === "ENTITY"
+      registerData.user_type === "ENTITY"
         ? registerData.business_name
         : registerData.full_name,
     kycUrl: `${process.env.CLIENT_BASE_URL1}/dashboard/account/kyc`,
@@ -226,7 +226,7 @@ exports.verifyLoginOtp = async (req, res) => {
   }
   // getKycDetails
   const kycData = await getMerchantKycByFilter(
-    { merchant_id: updatedMerchant._id },
+    { user_id: updatedMerchant._id },
     "_id kyc_status",
     { lean: true }
   );
@@ -236,7 +236,7 @@ exports.verifyLoginOtp = async (req, res) => {
   }
 
   const response = {
-    merchantType: updatedMerchant.merchant_type,
+    userType: updatedMerchant.user_type,
     businessName: updatedMerchant.business_name,
     businessCategory: updatedMerchant.business_category,
     fullName: updatedMerchant.full_name,
@@ -264,7 +264,7 @@ exports.verifyLoginOtp = async (req, res) => {
   // send login email
   const emailObject = {
     userName:
-      updatedMerchant.merchant_type === "ENTITY"
+      updatedMerchant.user_type === "ENTITY"
         ? updatedMerchant.business_name
         : updatedMerchant.full_name,
     ipAddress: req.ipAddress,
@@ -292,7 +292,7 @@ exports.sendForgotPasswordOtp = async (req, res) => {
   // check user
   const merchantData = await getMerchantByFilter(
     { email: req_body.email },
-    "email phone merchant_type business_name full_name",
+    "email phone user_type business_name full_name",
     {
       lean: true,
     }
@@ -428,7 +428,7 @@ exports.getMerchantDetails = async (req, res) => {
 
   const merchantData = await getMerchantByFilter(
     { token },
-    "_id merchant_type business_name business_category full_name profession email phone_code phone is_blocked onboarding_mode",
+    "_id user_type business_name business_category full_name profession email phone_code phone is_blocked onboarding_mode",
     { lean: true }
   );
 
@@ -450,7 +450,7 @@ exports.getMerchantDetails = async (req, res) => {
   }
 
   const kycData = await getMerchantKycByFilter(
-    { merchant_id: merchantData._id },
+    { user_id: merchantData._id },
     "_id kyc_status",
     { lean: true }
   );
@@ -467,7 +467,7 @@ exports.getMerchantDetails = async (req, res) => {
     message: "Data fecthed successfully",
     error: false,
     data: {
-      merchantType: merchantData.merchant_type,
+      userType: merchantData.user_type,
       businessName: merchantData.business_name,
       businessCategory: merchantData.business_category,
       fullName: merchantData.full_name,

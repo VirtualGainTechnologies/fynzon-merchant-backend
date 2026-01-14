@@ -40,7 +40,7 @@ exports.createInvoice = async (req, res) => {
   } = req.body;
 
   const invoice = await createInvoiceDoc({
-    merchant_id: req.merchantId,
+    merchant_id: req.userId,
     merchant_email: req.email,
     mode,
     deposit_crypto: depositCrypto,

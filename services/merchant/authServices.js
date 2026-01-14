@@ -103,7 +103,7 @@ exports.registerMerchant = async (req_body, session) => {
 
     // create user instance
     let merchantInstance = new MerchantModel({
-      merchant_type: req_body.category,
+      user_type: req_body.category,
       full_name: req_body.fullName || "",
       profession: req_body.profession || "",
       business_name:
@@ -127,7 +127,7 @@ exports.registerMerchant = async (req_body, session) => {
       user_id: merchantInstance._id,
       email: merchantInstance.email,
       user_category: "merchant",
-      user_type: merchantInstance.merchant_type,
+      user_type: merchantInstance.user_type,
     });
 
     // create wallet instance
@@ -243,7 +243,7 @@ exports.getAllMerchantDetails = (options) => {
           },
           {
             $project: {
-              merchant_type: 1,
+              user_type: 1,
               email: 1,
               business_name: 1,
               business_category: 1,
