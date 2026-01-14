@@ -483,24 +483,24 @@ exports.getMerchantDetails = async (req, res) => {
   res.status(200).json(response);
 };
 
-exports.getMerchantCryptoAddress = async (req, res) => {
-  const { network } = req.params;
+exports.getUserCryptoAddress = async (req, res) => {
+  const { network, email } = req.query;
 
   const cryptoAddress = await getMerchantCryptoAddressByFilter(
-    { email: req.email },
+    { email: email },
     `${network}`,
     { lean: true }
   );
 
   if (!cryptoAddress || !cryptoAddress?.[network]?.address) {
-    throw new AppError(400, "Merchant crypto address not found");
+    throw new AppError(400, "User crypto address not found");
   }
 
   // generate QR code
   const qrCode = await QRCode.toDataURL(cryptoAddress?.[network]?.address);
 
   res.status(200).json({
-    message: "Merchant crypto address fetched successfully",
+    message: "User crypto address fetched successfully",
     error: false,
     data: {
       network,
