@@ -4,7 +4,7 @@ const { invoiceQueue } = require("../queues/invoiceQueue");
 const { logger } = require("../../utils/winstonLogger");
 const { buildCronPattern } = require("../../utils/dateHelper");
 
-exports.scheduleInvoiceIssue = async (data) => {
+exports.scheduleInvoiceDispatch = async (data) => {
   try {
     const { issue_date, _id, tz = "UTC" } = data;
     const jobId = String(`issue-invoice-${_id}`);
@@ -35,7 +35,7 @@ exports.scheduleInvoiceIssue = async (data) => {
   }
 };
 
-exports.scheduleRecurringInvoiceIssue = async (data) => {
+exports.scheduleRecurringInvoiceDispatch = async (data) => {
   try {
     const {
       recurring: { every, day, date, month },

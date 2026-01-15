@@ -108,7 +108,7 @@ exports.getAllContactTypesByMode = (options) => {
   const pipeline = [
     {
       $match: {
-        merchant_id: options.merchantId,
+        user_id: options.userId,
       },
     },
     {
@@ -128,21 +128,21 @@ exports.getAllContactTypesByMode = (options) => {
 };
 
 exports.getAllSingleContacts = (options) => {
-  // searchValue = user_email contact_name or user_phone
+  // searchValue = contact_email contact_name or contact_phone
   let searchQuery = [];
   if (options?.searchValue) {
     searchQuery = [
-      { user_email: { $regex: options.searchValue, $options: "i" } },
+      { contact_email: { $regex: options.searchValue, $options: "i" } },
       { contact_name: { $regex: options.searchValue, $options: "i" } },
     ];
     // if input is a phone number (digits only)
     if (/^\d+$/.test(options.searchValue)) {
-      searchQuery.push({ user_phone: { $regex: options.searchValue } });
+      searchQuery.push({ contact_phone: { $regex: options.searchValue } });
     }
   }
 
   const filter = {
-    merchant_id: options.merchant_id,
+    user_id: options.user_id,
     mode: options.mode,
     ...(options?.contactType &&
       options?.contactType !== "ALL" && {
@@ -170,8 +170,8 @@ exports.getAllSingleContacts = (options) => {
               _id: 0,
               id: "$_id",
               mode: "$mode",
-              email: "$user_email",
-              phone: "$user_phone",
+              email: "$contact_email",
+              phone: "$contact_phone",
               taxId: "$tax_id",
               contactType: "$contact_type",
               contactName: "$contact_name",
@@ -270,11 +270,19 @@ exports.createContact = async (payload, session) => {
       data: contact,
     };
   } catch (err) {
-    console.log("err",err)
+    console.log("err", err);
     return {
       message: err?.message || "Failed to create contact",
       error: true,
       data: null,
     };
   }
+};
+
+exports.getContactByFilter = (
+  filter = {},
+  projections = null,
+  options = {}
+) => {
+  return ContactModel.findOne(filter, projections, options);
 };

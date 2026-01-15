@@ -3,18 +3,19 @@ const validator = require("validator");
 
 const invoiceSchema = new mongoose.Schema(
   {
-    merchant_id: {
+    // merchant details
+    user_id: {
       type: mongoose.Schema.Types.ObjectId,
       trim: true,
       ref: "merchant",
-      required: [true, "The field merchant_id is required"],
+      required: [true, "The field user_id is required"],
     },
-    merchant_email: {
+    user_email: {
       type: String,
       trim: true,
-      required: [true, "The field merchant_email is required"],
+      required: [true, "The field user_email is required"],
       lowercase: true,
-      validate: [validator.isEmail, "The field merchant_email is invalid"],
+      validate: [validator.isEmail, "The field user_email is invalid"],
     },
     mode: {
       type: String,
@@ -25,29 +26,11 @@ const invoiceSchema = new mongoose.Schema(
       },
       required: [true, "The field mode is required"],
     },
-    deposit_crypto: {
+    company_logo: {
       type: String,
-      trim: true,
-      enum: {
-        values: ["USDT"],
-        message: "{value} is not supported",
-      },
-      required: [true, "The field deposit_crypto is required"],
     },
-    deposit_network: {
-      type: String,
-      trim: true,
-      enum: {
-        values: ["TRC20"],
-        message: "{value} is not supported",
-      },
-      required: [true, "The field deposit_network is required"],
-    },
-    deposit_address: {
-      type: String,
-      trim: true,
-      required: [true, "The field deposit_address is required"],
-    },
+
+    // contact details
     contact_name: {
       type: String,
       trim: true,
@@ -73,7 +56,7 @@ const invoiceSchema = new mongoose.Schema(
         "Please provide a valid phone number",
       ],
     },
-    address: {
+    contact_address: {
       city: {
         type: String,
         required: [true, "The field city is required"],
@@ -99,68 +82,47 @@ const invoiceSchema = new mongoose.Schema(
         required: [true, "The field full_address is required"],
       },
     },
+
+    // wallet details
+    deposit_crypto: {
+      type: String,
+      trim: true,
+      enum: {
+        values: ["USDT"],
+        message: "{value} is not supported",
+      },
+      required: [true, "The field deposit_crypto is required"],
+    },
+    deposit_network: {
+      type: String,
+      trim: true,
+      enum: {
+        values: ["TRC20"],
+        message: "{value} is not supported",
+      },
+      required: [true, "The field deposit_network is required"],
+    },
+    deposit_address: {
+      type: String,
+      trim: true,
+      required: [true, "The field deposit_address is required"],
+    },
+
+    // invoice details
     invoice_number: {
       type: String,
       trim: true,
       required: [true, "The field invoice_number is required"],
     },
-    issue_date: {
-      type: String,
-      required: [true, "The field issue_date is required"],
-    },
-    due_date: {
-      type: String,
-      required: [true, "The field due_date is required"],
-    },
-    recurring: {
-      every: {
-        type: String,
-        trim: true,
-        enum: {
-          values: ["week", "month", "year"],
-          message: "{VALUE} is not supported",
-        },
-      },
-      day: {
-        type: Number,
-        min: 0,
-        max: 6,
-      },
-      date: {
-        type: Number,
-        min: 1,
-        max: 31,
-      },
-      month: {
-        type: Number,
-        min: 1,
-        max: 12,
-      },
-      expiry_days: {
-        type: Number,
-        min: 1,
-      },
-    },
     invoice_type: {
       type: String,
-      enum: ["INSTANT", "SCHEDULED", "RECURRING"],
+      enum: ["SCHEDULED", "RECURRING"],
       required: [true, "The field invoice_type is required"],
     },
-    invoice_discription: {
+    order_description: {
       type: String,
       trim: true,
-      required: [true, "The field invoice_discription is required"],
-      minlength: [10, "Invoice description must be at least 10 characters"],
-      maxlength: [100, "Invoice description cannot exceed 100 characters"],
-    },
-    base_currency: {
-      type: String,
-      trim: true,
-      enum: {
-        values: ["AED", "INR"],
-        message: "{value} is not supported",
-      },
-      required: [true, "The field base_currency is required"],
+      required: [true, "The field order_description is required"],
     },
     conversion_rate: {
       currency: {
@@ -184,26 +146,201 @@ const invoiceSchema = new mongoose.Schema(
         required: [true, "The field crypto_amount is required"],
       },
     },
+    issue_date: {
+      type: String,
+      required: [
+        function () {
+          return this.invoice_type === "SCHEDULED";
+        },
+        "The field issue_date is required",
+      ],
+      validate: {
+        validator: function (value) {
+          if (!value) return true;
+          return /^\d{4}-\d{2}-\d{2}$/.test(value);
+        },
+        message: "Invalid issue_date format (YYYY-MM-DD)",
+      },
+    },
+    due_date: {
+      type: String,
+      required: [
+        function () {
+          return this.invoice_type === "SCHEDULED";
+        },
+        "The field due_date is required",
+      ],
+      validate: {
+        validator: function (value) {
+          if (!value) return true;
+          return /^\d{4}-\d{2}-\d{2}$/.test(value);
+        },
+        message: "Invalid due_date format (YYYY-MM-DD)",
+      },
+    },
+    recurring: {
+      every: {
+        type: String,
+        trim: true,
+        enum: {
+          values: ["week", "month", "year"],
+          message: "{VALUE} is not supported",
+        },
+        required: [
+          function () {
+            return this.invoice_type === "RECURRING";
+          },
+          "Recurring interval (every) is required",
+        ],
+      },
+      day: {
+        type: Number,
+        min: [0, "Recurring day must be between 0 (Sunday) and 6 (Saturday)"],
+        max: [6, "Recurring day must be between 0 (Sunday) and 6 (Saturday)"],
+        required: [
+          function () {
+            return (
+              this.invoice_type === "RECURRING" &&
+              this.recurring?.every === "week"
+            );
+          },
+          "Recurring day is required when interval is weekly",
+        ],
+      },
+      date: {
+        type: Number,
+        min: [1, "Recurring date must be between 1 and 31"],
+        max: [31, "Recurring date must be between 1 and 31"],
+        required: [
+          function () {
+            return (
+              this.invoice_type === "RECURRING" &&
+              ["month", "year"].includes(this.recurring?.every)
+            );
+          },
+          "Recurring date is required when interval is monthly or yearly",
+        ],
+      },
+      month: {
+        type: Number,
+        min: [1, "Recurring month must be between 1 and 12"],
+        max: [12, "Recurring month must be between 1 and 12"],
+        required: [
+          function () {
+            return (
+              this.invoice_type === "RECURRING" &&
+              this.recurring?.every === "year"
+            );
+          },
+          "Recurring month is required when interval is yearly",
+        ],
+      },
+      due_days: {
+        type: Number,
+        min: [1, "Recurring due days must be positive"],
+        required: [
+          function () {
+            return this.invoice_type === "RECURRING";
+          },
+          "Recurring expiry days is required",
+        ],
+        validate: {
+          validator: function (value) {
+            if (!value) return true;
+            const every = this.recurring?.every;
+            if (!every) return true;
+
+            // limits based on interval to prevent overlap
+            const limits = {
+              week: 6,
+              month: 27,
+              year: 363,
+            };
+            const max = limits[every];
+            if (max && Number(value) > max) return false;
+            return true;
+          },
+          message: function () {
+            const every = this.recurring?.every;
+            const limits = { week: 6, month: 27, year: 363 };
+            return `Expiry days cannot exceed ${limits[every]} days for ${every} interval`;
+          },
+        },
+      },
+    },
+
+    // item details
     items: [
       {
+        category: {
+          type: String,
+          required: [true, "The field category is required"],
+        },
         name: {
           type: String,
-          required: [true, "The field name is required"],
+          required: [
+            function () {
+              return this.category?.toLowerCase() !== "builder";
+            },
+            "The field name is required",
+          ],
         },
         quantity: {
           type: Number,
-          required: [true, "The field quantity is required"],
+          required: [
+            function () {
+              return this.category?.toLowerCase() !== "builder";
+            },
+            "The field quantity is required",
+          ],
+        },
+        price_per_quantity: {
+          type: Number,
+          required: [
+            function () {
+              return this.category?.toLowerCase() !== "builder";
+            },
+            "The field price_per_quantity is required",
+          ],
+        },
+
+        project_name: {
+          type: String,
+          required: [
+            function () {
+              return this.category?.toLowerCase() == "builder";
+            },
+            "The field project_name is required",
+          ],
+        },
+        unit_number: {
+          type: String,
+          required: [
+            function () {
+              return this.category?.toLowerCase() == "builder";
+            },
+            "The field unit_number is required",
+          ],
         },
         price: {
           type: Number,
-          required: [true, "The field price is required"],
-        },
-        price_currency: {
-          type: String,
-          required: [true, "The field price_currency is required"],
+          required: [
+            function () {
+              return this.category?.toLowerCase() == "builder";
+            },
+            "The field price is required",
+          ],
         },
       },
     ],
+    total_currency_amount: {
+      type: Number,
+      required: [true, "The field total_amount is required"],
+    },
+    total_crypto_amount: {
+      type: Number,
+      required: [true, "The field total_amount is required"],
+    },
     discount_percentage: {
       type: Number,
       required: [true, "The field discount_percentage is required"],
@@ -212,14 +349,10 @@ const invoiceSchema = new mongoose.Schema(
       type: Number,
       required: [true, "The field tax_percentage is required"],
     },
-    total_amount: {
-      type: Number,
-      required: [true, "The field total_amount is required"],
-    },
     status: {
       type: String,
       enum: {
-        values: ["DRAFTED", "PENDING", "SUCCESS", "FAILED"],
+        values: ["PENDING", "SUCCESS", "FAILED"],
         message: "{value} is not supported",
       },
       default: "PENDING",

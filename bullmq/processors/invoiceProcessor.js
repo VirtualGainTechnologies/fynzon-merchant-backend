@@ -15,13 +15,39 @@ const {
   scheduleRecurringInvoiceExpiry,
 } = require("../schedulers/invoiceScheduler");
 
-exports.handleIssueInvoice = async (jobData) => {
+exports.handleDispatchInvoice = async (jobData) => {
   try {
     const { _id, tz } = jobData;
     // get invoice
     const invoice = await getInvoiceById(
       _id,
-      "due_date invoice_number invoice_type contact_name contact_type contact_email contact_phone address merchant_id merchant_email mode items discount_percentage tax_percentage total_amount base_currency recurring issue_date conversion_rate deposit_network deposit_crypto deposit_address",
+      {
+        user_id: 1,
+        user_email: 1,
+        mode: 1,
+        companyLogo: 1,
+        contact_name: 1,
+        contact_type: 1,
+        contact_email: 1,
+        contact_phone: 1,
+        contact_address: 1,
+        deposit_crypto: 1,
+        deposit_network: 1,
+        deposit_address: 1,
+        invoice_number: 1,
+        invoice_type: 1,
+        order_description: 1,
+        conversion_rate: 1,
+        issue_date: 1,
+        due_date: 1,
+        cron_pattern: 1,
+        items: 1,
+        discount_percentage: 1,
+        tax_percentage: 1,
+        total_currency_amount: 1,
+        total_crypto_amount: 1,
+        status: 1,
+      },
       { lean: true }
     );
     if (!invoice) {
@@ -30,23 +56,14 @@ exports.handleIssueInvoice = async (jobData) => {
     const {
       issue_date,
       due_date,
-      recurring: { expiry_days },
+      cron_pattern: { due_days },
       invoice_type,
       contact_email,
-      deposit_network,
+      deposit_address,
     } = invoice;
 
-    // get crypto address
-    const network = deposit_network.toLowerCase();
-    const cryptoAddress = await getMerchantCryptoAddressByFilter(
-      { email: contact_email },
-      `${network}`,
-      { lean: true }
-    );
-    if (!cryptoAddress || !cryptoAddress?.[network]?.address) {
-      throw new AppError(400, "Merchant crypto address not found");
-    }
-    const qrCode = await QRCode.toDataURL(cryptoAddress?.[network]?.address);
+    // generate qr code
+    const qrCode = await QRCode.toDataURL(deposit_address);
 
     // generate pdf
     const pdfBuffer = await generateInvoicePdfBuffer({
@@ -57,11 +74,9 @@ exports.handleIssueInvoice = async (jobData) => {
         invoice_type == "RECURRING"
           ? moment()
               .tz(tz)
-              .add(expiry_days * 1, "days")
+              .add(due_days * 1, "days")
               .format("YYYY-MM-DD")
           : due_date,
-      networkAddress: cryptoAddress?.[network]?.address,
-      company_name: "fynzon",
     });
     const safePdfBuffer = Buffer.isBuffer(pdfBuffer)
       ? pdfBuffer
@@ -86,7 +101,7 @@ exports.handleIssueInvoice = async (jobData) => {
       await scheduleRecurringInvoiceExpiry({
         issue_date,
         _id,
-        expiry_days,
+        due_days,
       });
     }
   } catch (err) {

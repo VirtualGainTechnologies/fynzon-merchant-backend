@@ -31,25 +31,30 @@ exports.generateInvoicePdfBuffer = async (invoiceData) => {
 
 const generateInvoiceHtml = async (data) => {
   const {
-    invoice_number,
-    newIssueDate,
-    newDueDate,
-    base_currency,
-    conversion_rate,
-    invoice_discription,
-    items,
-    discount_percentage,
-    tax_percentage,
-    deposit_crypto,
-    deposit_network,
-    deposit_address,
-    qrCode,
+    mode,
+    companyLogo,
     contact_name,
     contact_type,
     contact_email,
     contact_phone,
-    address,
-    company_name,
+    contact_address,
+    deposit_crypto,
+    deposit_network,
+    deposit_address,
+    invoice_number,
+    invoice_type,
+    order_description,
+    conversion_rate,
+    issue_date,
+    due_date,
+    cron_pattern,
+    items,
+    discount_percentage,
+    tax_percentage,
+    total_currency_amount,
+    total_crypto_amount,
+    newIssueDate,
+    newDueDate,
   } = data;
 
   const issueDate = newIssueDate || data.issue_date;
@@ -256,12 +261,20 @@ const generateInvoiceHtml = async (data) => {
       </div>
       <div style="max-width: 320px; margin-left: 10px;">
         <div style="margin-block: 8px;">Address: ${
-          address?.full_address || "N/A"
+          contact_address?.full_address || "N/A"
         }</div>
-        <div style="margin-block: 8px;">City: ${address?.city || "N/A"}</div>
-        <div style="margin-block: 8px;">State: ${address?.state || "N/A"}</div>
-        <div style="margin-block: 8px;">Country: ${address?.country}</div>
-        <div style="margin-block: 8px;">Zip Code: ${address?.zip || "N/A"}</div>
+        <div style="margin-block: 8px;">City: ${
+          contact_address?.city || "N/A"
+        }</div>
+        <div style="margin-block: 8px;">State: ${
+          contact_address?.state || "N/A"
+        }</div>
+        <div style="margin-block: 8px;">Country: ${
+          contact_address?.country
+        }</div>
+        <div style="margin-block: 8px;">Zip Code: ${
+          contact_address?.zip || "N/A"
+        }</div>
       </div>
     </div>
   </div>
@@ -284,7 +297,7 @@ const generateInvoiceHtml = async (data) => {
       <div style="max-width: 320px; margin-left: 10px;">
         <div style="margin-block: 8px;">Phone: ${contact_phone}</div>
         <div style="margin-block: 8px;">
-          Address: ${address?.full_address}
+          Address: ${contact_address?.full_address}
         </div>
       </div>
     </div>

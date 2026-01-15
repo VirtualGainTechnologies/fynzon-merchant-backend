@@ -22,7 +22,7 @@ exports.verifyMerchantToken = async (req, res, next) => {
   // get merchant based on token
   const merchant = await getMerchantByFilter(
     { token },
-    "_id email phone_code phone is_blocked full_name user_type business_name  onboarding_mode live_onboarding_enabled",
+    "_id email phone_code phone is_blocked full_name user_type business_name  onboarding_mode live_onboarding_enabled profession business_category",
     {
       lean: true,
     }
@@ -62,6 +62,10 @@ exports.verifyMerchantToken = async (req, res, next) => {
   req.kycStatus = kycData.kyc_status;
   req.onboradingMode = merchant.onboarding_mode;
   req.isLiveModeEnabled = merchant.live_onboarding_enabled;
+  req.userCategory =
+    merchant.user_type == "INDIVIDUAL"
+      ? merchant.profession
+      : merchant.business_category;
 
   next();
 };

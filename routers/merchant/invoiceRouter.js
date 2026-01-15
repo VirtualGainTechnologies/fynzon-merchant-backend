@@ -5,20 +5,66 @@ const moment = require("moment-timezone");
 const { catchAsync } = require("../../utils/catchAsync");
 const {
   createInvoice,
-  sendInvoiceEmail,
 } = require("../../controllers/merchant/invoiceController");
 const {
   verifyMerchantToken,
 } = require("../../middlewares/merchant/verifyMerchantToken");
-const { uploadPdf } = require("../../utils/imageUpload");
 
 const createInvoiceValidator = [
+  // merchant details
   body("mode")
     .trim()
     .notEmpty()
     .withMessage("The field mode is required")
     .isIn(["TEST", "LIVE"])
-    .withMessage("The field mode must be either TEST or LIVE"),
+    .withMessage("The field mode must be TEST or LIVE"),
+  body("companyLogo").optional().trim(),
+
+  // contact details
+  body("contactName")
+    .trim()
+    .notEmpty()
+    .withMessage("The field contactName is required"),
+  body("contactType")
+    .trim()
+    .notEmpty()
+    .withMessage("The field contactType is required"),
+  body("contactEmail")
+    .trim()
+    .notEmpty()
+    .withMessage("The field contactEmail is required")
+    .isEmail()
+    .withMessage("Please provide a valid email address"),
+  body("contactPhone")
+    .optional()
+    .isMobilePhone()
+    .withMessage("Please provide a valid phone number"),
+  body("contactAddress.city")
+    .trim()
+    .notEmpty()
+    .withMessage("The field contactAddress.city is required"),
+  body("contactAddress.zip")
+    .trim()
+    .notEmpty()
+    .withMessage("The field contactAddress.zip is required"),
+  body("contactAddress.state")
+    .trim()
+    .notEmpty()
+    .withMessage("The field contactAddress.state is required"),
+  body("contactAddress.country")
+    .trim()
+    .notEmpty()
+    .withMessage("The field contactAddress.country is required"),
+  body("contactAddress.countryCode")
+    .trim()
+    .notEmpty()
+    .withMessage("The field contactAddress.countryCode is required"),
+  body("contactAddress.fullAddress")
+    .trim()
+    .notEmpty()
+    .withMessage("The field contactAddress.fullAddress is required"),
+
+  // wallet details
   body("depositCrypto")
     .trim()
     .notEmpty()
@@ -35,138 +81,26 @@ const createInvoiceValidator = [
     .trim()
     .notEmpty()
     .withMessage("The field depositAddress is required"),
-  // contact info
-  body("contactName")
+
+  // invoice details
+  body("invoiceNumber")
     .trim()
     .notEmpty()
-    .withMessage("The field contactName is required"),
-  body("contactType")
-    .trim()
-    .notEmpty()
-    .withMessage("The field contactType is required"),
-  body("contactEmail")
-    .trim()
-    .notEmpty()
-    .withMessage("The field contactEmail is required")
-    .isEmail()
-    .withMessage("The field contactEmail must be a valid email address"),
-  body("contactPhone")
-    .optional({ nullable: true, checkFalsy: true })
-    .trim()
-    .isMobilePhone("any", { strictMode: false })
-    .withMessage("The field contactPhone must be a valid phone number"),
-  // address (nested)
-  body("address.city")
-    .trim()
-    .notEmpty()
-    .withMessage("The field address.city is required"),
-  body("address.zip")
-    .trim()
-    .notEmpty()
-    .withMessage("The field address.zip is required"),
-  body("address.state")
-    .trim()
-    .notEmpty()
-    .withMessage("The field address.state is required"),
-  body("address.country")
-    .trim()
-    .notEmpty()
-    .withMessage("The field address.country is required"),
-  body("address.countryCode")
-    .trim()
-    .notEmpty()
-    .withMessage("The field address.countryCode is required")
-    .isLength({ min: 2, max: 3 })
-    .withMessage("The field address.countryCode must be 2 or 3 characters"),
-  body("address.fullAddress")
-    .trim()
-    .notEmpty()
-    .withMessage("The field address.fullAddress is required"),
+    .withMessage("The field invoiceNumber is required"),
   body("invoiceType")
     .trim()
     .notEmpty()
     .withMessage("The field invoiceType is required")
-    .isIn(["INSTANT", "SCHEDULED", "RECURRING"])
+    .isIn(["SCHEDULED", "RECURRING"])
+    .withMessage("The field invoiceType must be SCHEDULED or RECURRING"),
+  body("orderDescription")
+    .trim()
+    .notEmpty()
+    .withMessage("The field orderDescription is required")
+    .isLength({ min: 5, max: 500 })
     .withMessage(
-      "The field invoiceType must be INSTANT, SCHEDULED or RECURRING"
+      "The field orderDescription must be between 5 and 500 characters"
     ),
-  // invoice info
-  body("issueDate")
-    .if((_value, { req }) =>
-      ["INSTANT", "SCHEDULED"].includes(req.body.invoiceType)
-    )
-    .notEmpty()
-    .withMessage("The field issueDate is required")
-    .custom((value, { req }) => {
-      if (req.body.invoiceType == "RECURRING") return true;
-      // validate issue date
-      const tz = req.body.timezone || "Asia/Kolkata";
-      const issue = moment.tz(value, "YYYY-MM-DD", true, tz);
-      if (!issue.isValid()) {
-        throw new Error("Invalid issueDate format (YYYY-MM-DD)");
-      }
-      const today = moment().tz(tz).startOf("day");
-
-      // instant invoice rule
-      if (req.body.invoiceType == "INSTANT") {
-        if (!issue.isSame(today, "day")) {
-          throw new Error("Issue date must be today for instant invoice");
-        }
-      }
-
-      // scheduled invoice rule
-      if (req.body.invoiceType == "SCHEDULED") {
-        if (!issue.isAfter(today, "day")) {
-          throw new Error(
-            "Issue date must be a future date for scheduled invoice"
-          );
-        }
-      }
-      return true;
-    }),
-
-  body("dueDate")
-    .if((_value, { req }) =>
-      ["INSTANT", "SCHEDULED"].includes(req.body.invoiceType)
-    )
-    .notEmpty()
-    .withMessage("The field dueDate is required")
-    .custom((value, { req }) => {
-      if (req.body.invoiceType == "RECURRING") return true;
-
-      const tz = req.body.timezone || "Asia/Kolkata";
-      const issue = moment.tz(req.body.issueDate, "YYYY-MM-DD", tz);
-      const due = moment.tz(value, "YYYY-MM-DD", true, tz);
-      if (!due.isValid()) {
-        throw new Error("Invalid dueDate format (YYYY-MM-DD)");
-      }
-      // rule: dueDate ≥ issueDate
-      if (due.isBefore(issue, "day")) {
-        throw new Error("Due date must be on or after issue date");
-      }
-      return true;
-    }),
-
-  body("timezone")
-    .optional()
-    .trim()
-    .custom((value) => moment.tz.names().includes(value))
-    .withMessage("The field timezone is invalid"),
-
-  body("invoiceDiscription")
-    .trim()
-    .notEmpty()
-    .withMessage("The field invoiceDiscription is required")
-    .isLength({ min: 10, max: 100 })
-    .withMessage(
-      "The field invoiceDiscription must be between 10 and 100 characters"
-    ),
-  body("baseCurrency")
-    .trim()
-    .notEmpty()
-    .withMessage("The field baseCurrency is required")
-    .isIn(["AED", "INR"])
-    .withMessage("The field baseCurrency must be AED or INR"),
 
   // conversion rate
   body("conversionRate.currency")
@@ -188,58 +122,52 @@ const createInvoiceValidator = [
     .isNumeric()
     .withMessage("The field conversionRate.cryptoAmount must be a number"),
 
-  // items array
-  body("items")
-    .isArray({ min: 1 })
-    .withMessage("The field items must contain at least one item"),
-  body("items.*.name")
-    .trim()
+  // scheduled invoice
+  body("timezone")
     .notEmpty()
-    .withMessage("The field items[].name is required"),
-  body("items.*.quantity")
+    .withMessage("The field timezone is required")
+    .custom((value) => moment.tz.names().includes(value))
+    .withMessage("The field timezone is invalid"),
+  body("issueDate")
+    .if((_value, { req }) => req.body.invoiceType !== "RECURRING")
     .notEmpty()
-    .withMessage("The field items[].quantity is required")
-    .isInt({ min: 1 })
-    .withMessage("The field items[].quantity must be a positive integer"),
+    .withMessage("The field issueDate is required")
+    .custom((value, { req }) => {
+      if (req.body.invoiceType == "RECURRING") return true;
+      const tz = req.body.timezone || "Asia/Kolkata";
+      const issue = moment.tz(value, "YYYY-MM-DD", true, tz);
+      if (!issue.isValid()) {
+        throw new Error("Invalid issueDate format (YYYY-MM-DD)");
+      }
+      const today = moment().tz(tz).startOf("day");
 
-  body("items.*.price")
-    .notEmpty()
-    .withMessage("The field items[].price is required")
-    .isNumeric()
-    .withMessage("The field items[].price must be a number"),
-
-  body("items.*.priceCurrency")
-    .trim()
-    .notEmpty()
-    .withMessage("The field items[].priceCurrency is required"),
-
-  // amounts & postercentages
-  body("discountPercentage")
-    .notEmpty()
-    .withMessage("The field discountPercentage is required")
-    .isNumeric()
-    .withMessage("The field discountPercentage must be a number")
-    .custom((value) => {
-      if (value < 0 || value > 100) {
-        throw new Error(
-          "The field discountPercentage must be between 0 and 100"
-        );
+      // rule: issueDate ≥ today
+      if (issue.isBefore(today, "day")) {
+        throw new Error("Issue date must be today or a future date");
       }
       return true;
     }),
 
-  body("taxPercentage")
+  body("dueDate")
+    .if((_value, { req }) => req.body.invoiceType !== "RECURRING")
     .notEmpty()
-    .withMessage("The field taxPercentage is required")
-    .isNumeric()
-    .withMessage("The field taxPercentage must be a number"),
-  body("totalAmount")
-    .notEmpty()
-    .withMessage("The field totalAmount is required")
-    .isNumeric()
-    .withMessage("The field totalAmount must be a number"),
+    .withMessage("The field dueDate is required")
+    .custom((value, { req }) => {
+      if (req.body.invoiceType == "RECURRING") return true;
+      const tz = req.body.timezone || "Asia/Kolkata";
+      const issue = moment.tz(req.body.issueDate, "YYYY-MM-DD", tz);
+      const due = moment.tz(value, "YYYY-MM-DD", true, tz);
+      if (!due.isValid()) {
+        throw new Error("Invalid dueDate format (YYYY-MM-DD)");
+      }
+      // rule: dueDate ≥ issueDate
+      if (due.isBefore(issue, "day")) {
+        throw new Error("Due date must be on or after issue date");
+      }
+      return true;
+    }),
 
-  // recurring
+  // recurring invoice
   body("recurring.every")
     .if((_, { req }) => req.body.invoiceType === "RECURRING")
     .notEmpty()
@@ -276,13 +204,12 @@ const createInvoiceValidator = [
     .withMessage("Recurring month is required")
     .isInt({ min: 1, max: 12 })
     .withMessage("Recurring month must be between 1 and 12"),
-
-  body("recurring.expiryDays")
+  body("recurring.dueDays")
     .if((_, { req }) => req.body.invoiceType === "RECURRING")
     .notEmpty()
-    .withMessage("Recurring expiry days is required")
+    .withMessage("Recurring due days is required")
     .isInt({ min: 1 })
-    .withMessage("Recurring expiry days must be a positive number")
+    .withMessage("Recurring due days must be a positive number")
     .custom((value, { req }) => {
       const every = req.body.recurring?.every;
       if (!every) return true;
@@ -300,14 +227,84 @@ const createInvoiceValidator = [
       }
       return true;
     }),
-];
 
-const sendInvoiceEmailValidator = [
-  body("email")
+  // items
+  body("items")
+    .isArray({ min: 1 })
+    .withMessage("At least one item is required"),
+  body("items.*.category")
+    .trim()
     .notEmpty()
-    .withMessage("The field email is required")
-    .isEmail()
-    .withMessage("Invalid email"),
+    .withMessage("The field items.category is required"),
+  body("items.*.name")
+    .if((_value, { req, path }) => {
+      const index = path.split(".")[1];
+      return req.body.items[index].category?.toLowerCase() !== "builder";
+    })
+    .notEmpty()
+    .withMessage("The field items.name is required"),
+  body("items.*.quantity")
+    .if((_value, { req, path }) => {
+      const index = path.split(".")[1];
+      return req.body.items[index].category?.toLowerCase() !== "builder";
+    })
+    .isNumeric()
+    .withMessage("The field items.quantity is required"),
+  body("items.*.pricePerQuantity")
+    .if((_value, { req, path }) => {
+      const index = path.split(".")[1];
+      return req.body.items[index].category?.toLowerCase() !== "builder";
+    })
+    .isNumeric()
+    .withMessage("The field items.pricePerQuantity is required"),
+  body("items.*.projectName")
+    .if((_value, { req, path }) => {
+      const index = path.split(".")[1];
+      return req.body.items[index].category?.toLowerCase() === "builder";
+    })
+    .notEmpty()
+    .withMessage("The field items.projectName is required"),
+  body("items.*.unitNumber")
+    .if((_value, { req, path }) => {
+      const index = path.split(".")[1];
+      return req.body.items[index].category?.toLowerCase() === "builder";
+    })
+    .notEmpty()
+    .withMessage("The field items.unitNumber is required"),
+  body("items.*.price")
+    .if((_value, { req, path }) => {
+      const index = path.split(".")[1];
+      return req.body.items[index].category?.toLowerCase() === "builder";
+    })
+    .isNumeric()
+    .withMessage("The field items.price is required"),
+
+  // percentages
+  body("discountPercentage")
+    .notEmpty()
+    .withMessage("The field discountPercentage is required")
+    .isNumeric()
+    .withMessage("The field discountPercentage must be a number")
+    .custom((value) => {
+      if (value < 0 || value > 100) {
+        throw new Error(
+          "The field discountPercentage must be between 0 and 100"
+        );
+      }
+      return true;
+    }),
+
+  body("taxPercentage")
+    .notEmpty()
+    .withMessage("The field taxPercentage is required")
+    .isNumeric()
+    .withMessage("The field taxPercentage must be a number")
+    .custom((value) => {
+      if (value < 0 || value > 100) {
+        throw new Error("The field taxPercentage must be between 0 and 100");
+      }
+      return true;
+    }),
 ];
 
 router.post(
@@ -315,14 +312,6 @@ router.post(
   createInvoiceValidator,
   catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
   catchAsync("createInvoice api", createInvoice)
-);
-
-router.post(
-  "/send-invoice-email",
-  uploadPdf.single("invoice"),
-  sendInvoiceEmailValidator,
-  catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
-  catchAsync("sendInvoiceEmail api", sendInvoiceEmail)
 );
 
 module.exports = router;

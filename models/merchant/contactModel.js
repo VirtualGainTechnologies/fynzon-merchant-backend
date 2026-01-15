@@ -3,20 +3,20 @@ const validator = require("validator");
 
 const contactTypeSchema = new mongoose.Schema(
   {
-    merchant_id: {
+    user_id: {
       type: mongoose.Schema.Types.ObjectId,
       trim: true,
       ref: "merchant",
-      required: [true, "The field merchant_id is required"],
-      unique: [true, "The field merchant_id must be unique"],
+      required: [true, "The field user_id is required"],
+      unique: [true, "The field user_id must be unique"],
     },
-    merchant_email: {
+    user_email: {
       type: String,
       trim: true,
-      required: [true, "The field merchant_email is required"],
+      required: [true, "The field user_email is required"],
       lowercase: true,
-      validate: [validator.isEmail, "The field merchant_email is invalid"],
-      unique: [true, "The field merchant_email must be unique"],
+      validate: [validator.isEmail, "The field user_email is invalid"],
+      unique: [true, "The field user_email must be unique"],
     },
     contact_types: [
       {
@@ -42,13 +42,13 @@ const ContactTypeModel = mongoose.model("contact-type", contactTypeSchema);
 
 const contactSchema = new mongoose.Schema(
   {
-    merchant_id: {
+    user_id: {
       type: mongoose.Schema.Types.ObjectId,
       trim: true,
       ref: "merchant",
-      required: [true, "The field merchant_id is required"],
+      required: [true, "The field user_id is required"],
     },
-    merchant_email: {
+    user_email: {
       type: String,
       trim: true,
       required: [true, "The field user_email is required"],
@@ -74,18 +74,16 @@ const contactSchema = new mongoose.Schema(
       trim: true,
       required: [true, "The field contact_type is required"],
     },
-    user_email: {
+    contact_email: {
       type: String,
       trim: true,
       required: [true, "The field user_email is required"],
-      // unique: [true, "The field user_email must be unique"],
       lowercase: true,
       validate: [validator.isEmail, "Please provide a valid email address"],
     },
-    user_phone: {
+    contact_phone: {
       type: String,
       trim: true,
-      // unique: [true, "The field user_phone must be unique"],
       validate: [
         validator.isMobilePhone,
         "Please provide a valid phone number",

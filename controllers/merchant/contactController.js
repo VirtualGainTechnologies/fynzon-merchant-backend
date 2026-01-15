@@ -20,7 +20,7 @@ exports.createContactType = async (req, res) => {
 
   // fetch merchant document first
   const contactTypes = await getContactTypeByFilter(
-    { merchant_id: req.userId },
+    { user_id: req.userId },
     "_id contact_types",
     { lean: true }
   );
@@ -61,10 +61,10 @@ exports.createContactType = async (req, res) => {
 
   // Upsert: update if exists, insert if not
   const createdContact = await updateContactTypeByFilter(
-    { merchant_id: req.userId },
+    { user_id: req.userId },
     {
-      merchant_id: req.userId,
-      merchant_email: req.email,
+      user_id: req.userId,
+      user_email: req.email,
       $push: {
         contact_types: {
           $each: contactTypeArray,
@@ -83,7 +83,7 @@ exports.createContactType = async (req, res) => {
 
   const contactTypesData = await getAllContactTypesByMode({
     mode,
-    merchantId: req.userId,
+    userId: req.userId,
   });
 
   if (!contactTypesData) {
@@ -106,7 +106,7 @@ exports.getContactTypes = async (req, res) => {
 
   const contactTypesData = await getAllContactTypesByMode({
     mode,
-    merchantId: req.userId,
+    userId: req.userId,
   });
 
   if (!contactTypesData) {
@@ -133,12 +133,12 @@ exports.createOrUpdateContact = async (req, session) => {
   }
 
   const query = {
-    merchant_id: req.userId,
+    user_id: req.userId,
     mode: req_body.mode,
     ...((req_body?.email || req_body?.phone) && {
       $or: [
-        ...((req_body?.email && [{ user_email: req_body.email }]) || []),
-        ...((req_body?.phone && [{ user_phone: req_body.phone }]) || []),
+        ...((req_body?.email && [{ contact_email: req_body.email }]) || []),
+        ...((req_body?.phone && [{ contact_phone: req_body.phone }]) || []),
       ],
     }),
   };
@@ -147,7 +147,7 @@ exports.createOrUpdateContact = async (req, session) => {
   if (query.$or?.length && req_body?.action === "CREATE") {
     const existingUser = await getContactByFilter(
       query,
-      "_id user_email user_phone",
+      "_id contact_email contact_phone",
       {
         lean: true,
       }
@@ -155,9 +155,9 @@ exports.createOrUpdateContact = async (req, session) => {
 
     if (existingUser) {
       const message =
-        req_body?.email && existingUser?.user_email === req_body?.email
+        req_body?.email && existingUser?.contact_email === req_body?.email
           ? "This email already exists"
-          : req_body?.phone && existingUser?.user_phone === req_body?.phone
+          : req_body?.phone && existingUser?.contact_phone === req_body?.phone
           ? "This phone number already exists"
           : "Email or phone number is missing";
       throw new AppError(400, message);
@@ -166,16 +166,16 @@ exports.createOrUpdateContact = async (req, session) => {
 
   const payload = {
     ...(req_body.action === "CREATE" && {
-      merchant_id: req.userId,
-      merchant_email: req.email,
+      user_id: req.userId,
+      user_email: req.email,
       date: new Date().getTime(),
-      user_email: req_body.email,
+      contact_email: req_body.email,
     }),
     mode: req_body.mode,
     contact_name: req_body.contactName,
     contact_type: req_body.contactType,
     ...(req_body.phone && {
-      user_phone: req_body.phone,
+      contact_phone: req_body.phone,
     }),
     ...(req_body.note && {
       note: req_body.note,
@@ -209,8 +209,8 @@ exports.createOrUpdateContact = async (req, session) => {
     // update existing contact
     contactData = await updateContactByFilter(
       {
-        merchant_id: req.userId,
-        user_email: req_body.email,
+        user_id: req.userId,
+        contact_email: req_body.email,
       },
       payload,
       { new: true }
@@ -236,8 +236,8 @@ exports.createOrUpdateContact = async (req, session) => {
       action: req_body.action,
       id: contactData?._id,
       mode: contactData?.mode,
-      email: contactData?.user_email || "",
-      phone: contactData?.user_phone || "",
+      email: contactData?.contact_email || "",
+      phone: contactData?.contact_phone || "",
       contactName: contactData?.contact_name,
       contactType: contactData?.contact_type,
       taxId: contactData?.tax_id || "",
@@ -252,7 +252,7 @@ exports.createOrUpdateContact = async (req, session) => {
 exports.getAllContacts = async (req, res) => {
   const { mode = "LIVE", contactType = "ALL", searchValue = null } = req.query;
   const contactsData = await getAllSingleContacts({
-    merchant_id: req.userId,
+    user_id: req.userId,
     mode,
     contactType,
     ...(searchValue && {
