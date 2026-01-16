@@ -63,11 +63,9 @@ const invoiceSchema = new mongoose.Schema(
       },
       zip: {
         type: String,
-        required: [true, "The field zip is required"],
       },
       state: {
-        type: String,
-        required: [true, "The field state is required"],
+        type: String
       },
       country: {
         type: String,

@@ -43,14 +43,8 @@ const createInvoiceValidator = [
     .trim()
     .notEmpty()
     .withMessage("The field contactAddress.city is required"),
-  body("contactAddress.zip")
-    .trim()
-    .notEmpty()
-    .withMessage("The field contactAddress.zip is required"),
-  body("contactAddress.state")
-    .trim()
-    .notEmpty()
-    .withMessage("The field contactAddress.state is required"),
+  body("contactAddress.zip").optional(),
+  body("contactAddress.state").optional(),
   body("contactAddress.country")
     .trim()
     .notEmpty()

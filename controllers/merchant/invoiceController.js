@@ -126,8 +126,8 @@ exports.createInvoice = async (req, res) => {
     contact_phone: contactPhone,
     contact_address: {
       city: contactAddress.city,
-      zip: contactAddress.zip,
-      state: contactAddress.state,
+      zip: contactAddress?.zip || "N/A",
+      state: contactAddress?.state || "N/A",
       country: contactAddress.country,
       country_code: contactAddress.countryCode,
       full_address: contactAddress.fullAddress,
