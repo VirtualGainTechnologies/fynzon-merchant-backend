@@ -36,6 +36,7 @@ exports.createInvoice = async (req, res) => {
     discountPercentage,
     taxPercentage,
     items,
+    mode,
     invoiceType,
     timezone,
     recurring,

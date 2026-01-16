@@ -33,6 +33,7 @@ const generateInvoiceHtml = async (data) => {
   const {
     mode,
     companyLogo,
+    company_name,
     contact_name,
     contact_type,
     contact_email,
@@ -49,49 +50,101 @@ const generateInvoiceHtml = async (data) => {
     due_date,
     cron_pattern,
     items,
+    userCategory,
     discount_percentage,
     tax_percentage,
     total_currency_amount,
     total_crypto_amount,
     newIssueDate,
     newDueDate,
+    base_currency = "AED",
+    qrCode,
   } = data;
 
-  const issueDate = newIssueDate || data.issue_date;
-  const dueDate = newDueDate;
+  const issueDate = newIssueDate || issue_date;
+  const dueDate = newDueDate || due_date;
 
-  // Calculate totals
   let subtotal = 0;
-  const tableRows = items
-    .map((item) => {
-      const itemTotal = item.quantity * item.price;
-      subtotal += itemTotal;
-      return `
-      <tr style="height: 30px;">
-        <td style="text-align: start; border-top: 1px solid grey;">${
-          item.name || "Item"
-        }</td>
-        <td style="text-align: center; border-top: 1px solid grey;">${
-          item.quantity
-        }</td>
-        <td style="text-align: center; border-top: 1px solid grey; ">${item.price.toFixed(
-          2
-        )}</td>
-        <td style="text-align: center; border-top: 1px solid grey;">${itemTotal.toFixed(
-          3
-        )} ${base_currency}</td>
+  const isBuilder = userCategory?.toLowerCase() === "builder";
+
+  const formatCurrency = (num) =>
+    Number(num || 0)
+      .toFixed(2)
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+  /* ---------------- TABLE HEADERS ---------------- */
+  const tableHeader = isBuilder
+    ? `
+      <tr style="height: 30px; background-color: aliceblue;">
+        <th style="text-align: start; border-top: 1px solid grey;">Project</th>
+        <th style="text-align: center; border-top: 1px solid grey;">Unit</th>
+        <th style="text-align: center; border-top: 1px solid grey;">Price</th>
+        <th style="text-align: center; border-top: 1px solid grey;">Total (${base_currency})</th>
+      </tr>
+    `
+    : `
+      <tr style="height: 30px; background-color: aliceblue;">
+        <th style="text-align: start; border-top: 1px solid grey;">Item</th>
+        <th style="text-align: center; border-top: 1px solid grey;">Quantity</th>
+        <th style="text-align: center; border-top: 1px solid grey;">Price / Qty</th>
+        <th style="text-align: center; border-top: 1px solid grey;">Total (${base_currency})</th>
       </tr>
     `;
+
+  /* ---------------- TABLE ROWS ---------------- */
+  const tableRows = items
+    .map((item) => {
+      if (isBuilder) {
+        const price = Number(item.price || 0);
+        subtotal += price;
+
+        return `
+          <tr style="height: 30px;">
+            <td style="text-align: start; border-top: 1px solid grey;">
+              ${item.projectName || "Project"}
+            </td>
+            <td style="text-align: center; border-top: 1px solid grey;">
+              ${item.unitNumber || "-"}
+            </td>
+            <td style="text-align: center; border-top: 1px solid grey;">
+              ${formatCurrency(price)}
+            </td>
+            <td style="text-align: center; border-top: 1px solid grey;">
+              ${formatCurrency(price)} ${base_currency}
+            </td>
+          </tr>
+        `;
+      }
+
+      const quantity = Number(item.quantity || 0);
+      const price = Number(item.pricePerQuantity || 0);
+      const itemTotal = quantity * price;
+      subtotal += itemTotal;
+
+      return `
+        <tr style="height: 30px;">
+          <td style="text-align: start; border-top: 1px solid grey;">
+            ${item.name || "Item"}
+          </td>
+          <td style="text-align: center; border-top: 1px solid grey;">
+            ${quantity}
+          </td>
+          <td style="text-align: center; border-top: 1px solid grey;">
+            ${formatCurrency(price)}
+          </td>
+          <td style="text-align: center; border-top: 1px solid grey;">
+            ${formatCurrency(itemTotal)} ${base_currency}
+          </td>
+        </tr>
+      `;
     })
     .join("");
 
-  const taxAmount = (subtotal * (tax_percentage || 18)) / 100;
-  const discountAmount = (subtotal * (discount_percentage || 2)) / 100;
-  const finalAmountCrypto = conversion_rate?.crypto_amount;
+  const taxAmount = (subtotal * (tax_percentage || 0)) / 100;
+  const discountAmount = (subtotal * (discount_percentage || 0)) / 100;
+  const finalPayable = subtotal + taxAmount - discountAmount;
 
-  const formatCurrency = (num) =>
-    num.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-
+  /* ---------------- HTML TEMPLATE ---------------- */
   return `
 <div style="
   width: 800px;
@@ -102,206 +155,95 @@ const generateInvoiceHtml = async (data) => {
   font-family: Arial, sans-serif;
   font-size: 12px;
 ">
+
   <!-- Header -->
   <div style="display: flex; justify-content: space-between; align-items: center;">
     <div style="font-size: 32px; font-weight: 600;">Invoice</div>
-      <img
-      src="https://fynzon-test-public-files.s3.ap-south-1.amazonaws.com/image-15-11-2024-105-fynzonlogo_2png"
-      alt="company_logo"
-      width="30"
-      height="30"
-    />
-
+    <img src="${companyLogo || ""}" alt="company_logo" width="30" height="30" />
   </div>
 
   <hr style="margin: 15px 0;" />
 
   <!-- Invoice Details -->
-  <div style="
-    border: 1px solid grey;
-    padding-inline: 40px;
-    padding-block: 20px;
-    border-radius: 10px;
-    margin-top: 10px;
-    color: black;
-  ">
+  <div style="border: 1px solid grey; padding: 20px 40px; border-radius: 10px;">
     <div style="font-weight: 600; font-size: 16px;">Invoice Details</div>
+
     <div style="display: flex; justify-content: space-between; margin-top: 12px;">
       <div>
         <p>Invoice Number: ${invoice_number || "N/A"}</p>
         <p>Issue Date: ${issueDate}</p>
         <p>Due Date: ${dueDate}</p>
       </div>
-      <div style="max-width: 320px;">
-        <p>Base Currency: ${base_currency || "AED"}</p>
-        <p>Conversion Rate: ${
-          conversion_rate?.currency_amount || "30"
-        } ${base_currency} = 1 ${conversion_rate?.crypto || "USDT"}</p>
-        <p>Order Description: ${invoice_discription || "N/A"}</p>
-      </div>
-    </div>
-
-    <div style="margin-top: 15px;">
-      <div style="
-        background-color: whitesmoke;
-        padding: 10px;
-        border-radius: 5px;
-        font-weight: 500;
-      ">
-        Please note that the invoice will be issued on ${issueDate} and will be valid until ${dueDate}
+      <div>
+        <p>Base Currency: ${base_currency}</p>
+        <p>
+          Conversion Rate:
+          ${conversion_rate?.currency_amount || "N/A"} ${base_currency}
+          = 1 ${conversion_rate?.crypto || deposit_crypto}
+        </p>
+        <p>Order Description: ${order_description || "N/A"}</p>
       </div>
     </div>
   </div>
 
   <!-- Amount Details -->
-  <div style="
-    border: 1px solid grey;
-    padding-inline: 40px;
-    padding-block: 20px;
-    border-radius: 10px;
-    margin-top: 10px;
-    color: black;
-  ">
+  <div style="border: 1px solid grey; padding: 20px 40px; border-radius: 10px; margin-top: 10px;">
     <div style="font-weight: 600; font-size: 16px;">Amount Details</div>
 
-    <table style="
-      width: 100%;
-      margin-block: 20px;
-      padding: 0;
-      border-spacing: 0;
-      border-bottom: 1px solid grey;
-      font-size: 10px;
-    ">
-      <tr style="height: 30px; background-color: aliceblue; ">
-        <th style="text-align: start; border-top: 1px solid grey;">Item</th>
-        <th style="text-align: center; border-top: 1px solid grey;">Quantity</th>
-        <th style="text-align: center; border-top: 1px solid grey;">Price Per Quantity</th>
-        <th style="text-align: center; border-top: 1px solid grey;">Total (${base_currency})</th>
-      </tr>
+    <table style="width: 100%; margin-top: 20px; border-spacing: 0; font-size: 10px;">
+      ${tableHeader}
       ${tableRows}
     </table>
 
-    <div>
-      <h4 style="font-weight: 400; margin: 0 0 12px 0;">Price Breakup:</h4>
-      <div style="display: flex; justify-content: space-between; margin-block: 10px;">
-        <div>Total Invoice Amount:</div>
-        <div style="text-align: end;">${formatCurrency(
-          subtotal
-        )} ${base_currency}</div>
+    <div style="margin-top: 20px;">
+      <div style="display: flex; justify-content: space-between;">
+        <div>Subtotal:</div>
+        <div>${formatCurrency(subtotal)} ${base_currency}</div>
       </div>
-      <div style="display: flex; justify-content: space-between; margin-block: 10px;">
-        <div>Tax (${tax_percentage || "N/A"}%):</div>
-        <div style="text-align: end;">${formatCurrency(
-          taxAmount
-        )} ${base_currency}</div>
+      <div style="display: flex; justify-content: space-between;">
+        <div>Tax (${tax_percentage || 0}%):</div>
+        <div>${formatCurrency(taxAmount)} ${base_currency}</div>
       </div>
-      <div style="display: flex; justify-content: space-between; margin-block: 10px;">
-        <div>Discount (${discount_percentage || "N/A"}%):</div>
-        <div style="text-align: end;">${formatCurrency(
-          discountAmount
-        )} ${base_currency}</div>
+      <div style="display: flex; justify-content: space-between;">
+        <div>Discount (${discount_percentage || 0}%):</div>
+        <div>${formatCurrency(discountAmount)} ${base_currency}</div>
       </div>
-      <div style="display: flex; justify-content: space-between; margin-block: 10px; font-weight: 600;">
-        <div>Amount will be paid:</div>
-        <div style="text-align: end; color: dodgerblue; font-weight: 600;">
-          ${finalAmountCrypto} ${deposit_crypto || "N/A"}
+      <div style="display: flex; justify-content: space-between; font-weight: 600;">
+        <div>Amount to be Paid:</div>
+        <div style="color: dodgerblue;">
+          ${
+            total_crypto_amount || formatCurrency(finalPayable)
+          } ${deposit_crypto}
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Payment Wallet Details -->
-  <div style="
-    border: 1px solid grey;
-    padding-inline: 40px;
-    padding-block: 20px;
-    border-radius: 10px;
-    margin-top: 10px;
-    color: black;
-  ">
+  <!-- Payment Wallet -->
+  <div style="border: 1px solid grey; padding: 20px 40px; border-radius: 10px; margin-top: 10px;">
     <div style="font-weight: 600; font-size: 16px;">Payment Wallet Details</div>
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 12px;">
-      <div style="text-align: start; margin-top: 8px;">
-        <div>Crypto: ${deposit_crypto || "N/A"}</div>
-        <div style="margin-block: 8px;">Network: ${
-          deposit_network || "N/A"
-        }</div>
-        <div>Network Address: ${deposit_address || "N/A"}</div>
-      </div>
-      <div style="text-align: start;">
-       <img alt="qr_code" width="100" src="${qrCode}" />
-      </div>
-    </div>
+    <p>Crypto: ${deposit_crypto}</p>
+    <p>Network: ${deposit_network}</p>
+    <p>Address: ${deposit_address}</p>
+    ${qrCode ? `<img src="${qrCode}" width="100" />` : ""}
   </div>
 
-  <!-- Received By (Merchant / Business) -->
-  <div style="
-    border: 1px solid grey;
-    padding-inline: 40px;
-    padding-block: 20px;
-    border-radius: 10px;
-    margin-top: 10px;
-    color: black;
-  ">
+  <!-- Received By -->
+  <div style="border: 1px solid grey; padding: 20px 40px; border-radius: 10px; margin-top: 10px;">
     <div style="font-weight: 600; font-size: 16px;">Received By</div>
-    <div style="display: flex; justify-content: space-between; margin-block: 12px;">
-      <div>
-        <div style="margin-block: 8px;">Contact Name: ${
-          contact_name || "N/A"
-        }</div>
-        <div style="margin-block: 8px;">Contact Type: ${
-          contact_type || "N/A"
-        }</div>
-        <div style="margin-block: 8px;">Email: ${contact_email || "N/A"}</div>
-        <div style="margin-block: 8px;">Phone: ${contact_phone || "N/A"}</div>
-        <div style="margin-block: 8px;">Company Name:${
-          company_name || "N/A"
-        }</div>
-        <div style="margin-block: 8px;">Registration / Tax Id: tax345</div>
-      </div>
-      <div style="max-width: 320px; margin-left: 10px;">
-        <div style="margin-block: 8px;">Address: ${
-          contact_address?.full_address || "N/A"
-        }</div>
-        <div style="margin-block: 8px;">City: ${
-          contact_address?.city || "N/A"
-        }</div>
-        <div style="margin-block: 8px;">State: ${
-          contact_address?.state || "N/A"
-        }</div>
-        <div style="margin-block: 8px;">Country: ${
-          contact_address?.country
-        }</div>
-        <div style="margin-block: 8px;">Zip Code: ${
-          contact_address?.zip || "N/A"
-        }</div>
-      </div>
-    </div>
+    <p>${company_name || "N/A"}</p>
+    <p>${contact_email}</p>
+    <p>${contact_phone}</p>
+    <p>${contact_address?.full_address || ""}</p>
   </div>
 
-  <!-- Received From (Customer) -->
-  <div style="
-    border: 1px solid grey;
-    padding-inline: 40px;
-    padding-block: 20px;
-    border-radius: 10px;
-    margin-top: 10px;
-    color: black;
-  ">
+  <!-- Received From -->
+  <div style="border: 1px solid grey; padding: 20px 40px; border-radius: 10px; margin-top: 10px;">
     <div style="font-weight: 600; font-size: 16px;">Received From</div>
-    <div style="display: flex; justify-content: space-between; margin-top: 12px;">
-      <div>
-        <div style="margin-block: 8px;">Full Name: ${contact_name}</div>
-        <div style="margin-block: 8px;">Email: ${contact_email}</div>
-      </div>
-      <div style="max-width: 320px; margin-left: 10px;">
-        <div style="margin-block: 8px;">Phone: ${contact_phone}</div>
-        <div style="margin-block: 8px;">
-          Address: ${contact_address?.full_address}
-        </div>
-      </div>
-    </div>
+    <p>${contact_name}</p>
+    <p>${contact_email}</p>
   </div>
+
 </div>
-  `;
+`;
 };

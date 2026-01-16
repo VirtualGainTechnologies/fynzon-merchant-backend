@@ -7,8 +7,10 @@ const {
 const { INVOICE_QUEUE_NAME } = require("../queues/invoiceQueue");
 const { redis, redlock } = require("./../redis");
 const { logger } = require("../../utils/winstonLogger");
+const { updateInvoiceById } = require("../../services/merchant/invoiceService");
 
 const LOCK_TTL = 20 * 60 * 1000; // 20 minutes
+const CONCURRENCY = parseInt(process.env.INVOICE_WORKER_CONCURRENCY, 10) || 5;
 
 // create worker
 const invoiceWorker = new Worker(
@@ -84,7 +86,22 @@ invoiceWorker.on("failed", async (job, err) => {
       `[INVOICE_WORKER] Job permanently failed | id=${job.id} | invoiceId=${job.data?.invoiceId}`
     );
 
-    // update invoice status ...............
+    // update invoice status
+    try {
+      const updatedInvoice = await updateInvoiceById(
+        job.data?._id,
+        { status: "FAILED" },
+        { new: true }
+      );
+
+      if (!updatedInvoice) {
+        logger.error(`[INVOICE_WORKER] Failed to update invoice status`);
+      }
+    } catch (err) {
+      logger.error(
+        `[INVOICE_WORKER] Failed to update invoice status | error=${err.message}`
+      );
+    }
   }
 });
 

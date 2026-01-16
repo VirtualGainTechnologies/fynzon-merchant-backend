@@ -244,16 +244,12 @@ exports.verifyLoginOtp = async (req, res) => {
     email: updatedMerchant.email,
     phoneCode: updatedMerchant.phone_code,
     phone: updatedMerchant.phone,
-    jwtToken: {
-      tokenName: "merchant_token",
-      token: updatedMerchant.token,
-    },
     kycStatus: kycData?.kyc_status,
     onboardingMode: updatedMerchant.onboarding_mode,
   };
 
   // set cookies
-  res.cookie(response.jwtToken.tokenName, response.jwtToken.token, {
+  res.cookie("merchant_token", updatedMerchant.token, {
     // httpOnly: false,
     // secure: "auto",
     // maxAge: process.env.COOKIE_EXPIRATION_MILLISECONDS * 1,

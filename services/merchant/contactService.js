@@ -212,7 +212,7 @@ exports.createContact = async (payload, session) => {
     // create kyc instance
     const kycInstance = new MerchantKycModel({
       user_id: contactInstance._id,
-      email: contactInstance.user_email,
+      email: contactInstance.contact_email,
       user_category: "contact",
       user_type: "INDIVIDUAL",
     });
@@ -222,7 +222,7 @@ exports.createContact = async (payload, session) => {
     if (walletData.error) throw new AppError(400, walletData.message);
     const walletInstance = new MerchantWalletModel({
       user_id: contactInstance._id,
-      email: contactInstance.user_email,
+      email: contactInstance.contact_email,
       user_category: "contact",
       ...walletData.data,
     });
@@ -233,7 +233,7 @@ exports.createContact = async (payload, session) => {
       throw new AppError(400, "Failed to generate crypto address");
     const cryptoAddressInstance = new MerchantCryptoAddressModel({
       user_id: contactInstance._id,
-      email: contactInstance.user_email,
+      email: contactInstance.contact_email,
       user_category: "contact",
       ...cryptoAddressData.data,
     });

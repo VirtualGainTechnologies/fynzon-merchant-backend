@@ -2,9 +2,6 @@ const QRCode = require("qrcode");
 const moment = require("moment-timezone");
 
 const {
-  getMerchantCryptoAddressByFilter,
-} = require("../../services/merchant/cryptoAddressServices");
-const {
   getInvoiceById,
   updateInvoiceById,
 } = require("../../services/merchant/invoiceService");
@@ -40,7 +37,7 @@ exports.handleDispatchInvoice = async (jobData) => {
         conversion_rate: 1,
         issue_date: 1,
         due_date: 1,
-        cron_pattern: 1,
+        recurring: 1,
         items: 1,
         discount_percentage: 1,
         tax_percentage: 1,
@@ -56,10 +53,11 @@ exports.handleDispatchInvoice = async (jobData) => {
     const {
       issue_date,
       due_date,
-      cron_pattern: { due_days },
+      recurring,
       invoice_type,
       contact_email,
       deposit_address,
+      items,
     } = invoice;
 
     // generate qr code
@@ -68,6 +66,7 @@ exports.handleDispatchInvoice = async (jobData) => {
     // generate pdf
     const pdfBuffer = await generateInvoicePdfBuffer({
       ...invoice,
+      userCategory: items[0]?.category,
       qrCode,
       newIssueDate: moment().tz(tz).format("YYYY-MM-DD"),
       newDueDate:
@@ -101,7 +100,7 @@ exports.handleDispatchInvoice = async (jobData) => {
       await scheduleRecurringInvoiceExpiry({
         issue_date,
         _id,
-        due_days,
+        due_days: recurring?.due_days,
       });
     }
   } catch (err) {

@@ -104,7 +104,7 @@ exports.scheduleInvoiceExpiry = async (data) => {
 
 exports.scheduleRecurringInvoiceExpiry = async (data) => {
   try {
-    const { issue_date, _id, expiry_days } = data;
+    const { issue_date, _id, due_days } = data;
     const jobId = String(
       `expire-invoice-${_id.toString()}-${new Date(issue_date).getTime()}`
     );
@@ -115,7 +115,7 @@ exports.scheduleRecurringInvoiceExpiry = async (data) => {
         jobId,
         removeOnComplete: true,
         removeOnFail: true,
-        delay: parseInt(expiry_days) * 24 * 60 * 60 * 1000,
+        delay: parseInt(due_days) * 24 * 60 * 60 * 1000,
         attempts: 3,
         backoff: {
           type: "exponential",

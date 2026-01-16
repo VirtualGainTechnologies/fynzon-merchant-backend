@@ -232,52 +232,55 @@ const createInvoiceValidator = [
   body("items")
     .isArray({ min: 1 })
     .withMessage("At least one item is required"),
+
   body("items.*.category")
     .trim()
     .notEmpty()
     .withMessage("The field items.category is required"),
-  body("items.*.name")
-    .if((_value, { req, path }) => {
-      const index = path.split(".")[1];
-      return req.body.items[index].category?.toLowerCase() !== "builder";
-    })
-    .notEmpty()
-    .withMessage("The field items.name is required"),
-  body("items.*.quantity")
-    .if((_value, { req, path }) => {
-      const index = path.split(".")[1];
-      return req.body.items[index].category?.toLowerCase() !== "builder";
-    })
-    .isNumeric()
-    .withMessage("The field items.quantity is required"),
-  body("items.*.pricePerQuantity")
-    .if((_value, { req, path }) => {
-      const index = path.split(".")[1];
-      return req.body.items[index].category?.toLowerCase() !== "builder";
-    })
-    .isNumeric()
-    .withMessage("The field items.pricePerQuantity is required"),
-  body("items.*.projectName")
-    .if((_value, { req, path }) => {
-      const index = path.split(".")[1];
-      return req.body.items[index].category?.toLowerCase() === "builder";
-    })
-    .notEmpty()
-    .withMessage("The field items.projectName is required"),
-  body("items.*.unitNumber")
-    .if((_value, { req, path }) => {
-      const index = path.split(".")[1];
-      return req.body.items[index].category?.toLowerCase() === "builder";
-    })
-    .notEmpty()
-    .withMessage("The field items.unitNumber is required"),
-  body("items.*.price")
-    .if((_value, { req, path }) => {
-      const index = path.split(".")[1];
-      return req.body.items[index].category?.toLowerCase() === "builder";
-    })
-    .isNumeric()
-    .withMessage("The field items.price is required"),
+
+  body("items.*").custom((item) => {
+    const category = item.category?.toLowerCase();
+    if (!category) {
+      throw new Error("The field items.category is required");
+    }
+
+    // non-builder items
+    if (category !== "builder") {
+      if (!item?.name) {
+        throw new Error("The field items.name is required");
+      }
+      if (!item?.quantity) {
+        throw new Error("The field items.quantity is required");
+      }
+      if (!item?.pricePerQuantity) {
+        throw new Error("The field items.pricePerQuantity is required");
+      }
+      if (isNaN(item?.quantity)) {
+        throw new Error("The field items.quantity must be a number");
+      }
+      if (isNaN(item?.pricePerQuantity)) {
+        throw new Error("The field items.pricePerQuantity must be a number");
+      }
+    }
+
+    // builder items
+    if (category === "builder") {
+      if (!item.projectName) {
+        throw new Error("The field items.projectName is required");
+      }
+      if (!item.unitNumber) {
+        throw new Error("The field items.unitNumber is required");
+      }
+      if (!item.price) {
+        throw new Error("The field items.price is required");
+      }
+      if (isNaN(item.price)) {
+        throw new Error("The field items.price must be a number");
+      }
+    }
+
+    return true;
+  }),
 
   // percentages
   body("discountPercentage")
