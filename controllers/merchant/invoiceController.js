@@ -101,7 +101,7 @@ exports.createInvoice = async (req, res) => {
         price: item.price,
       };
     } else {
-      totalCurrencyAmount += item.pricePerQuantity * Number(item.quantity);
+      totalCurrencyAmount += item.pricePerQuantity * item.quantity;
       return {
         category: req.userCategory,
         name: item.name,
@@ -168,7 +168,7 @@ exports.createInvoice = async (req, res) => {
     discount_percentage: discountPercentage,
     tax_percentage: taxPercentage,
     total_currency_amount: totalCurrencyAmount,
-    total_crypto_amount: totalCryptoAmount,
+    total_crypto_amount: Math.round(Number(totalCryptoAmount) * 100) / 100,
     status: "PENDING",
   });
 
