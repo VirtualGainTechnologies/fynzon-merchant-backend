@@ -24,7 +24,7 @@ exports.handleDispatchInvoice = async (jobData) => {
     const { _id, tz } = jobData;
     const invoice = await getInvoiceById(
       _id,
-      "_id issue_date due_date recurring invoice_type company_logo company_name contact_name contact_phone contact_address invoice_number order_description conversion_rate items discount_percentage tax_percentage total_crypto_amount base_currency",
+      "_id issue_date due_date recurring invoice_type company_logo company_name contact_name contact_phone contact_address invoice_number order_description conversion_rate items discount_percentage tax_percentage total_crypto_amount base_currency deposit_address contact_email",
       { lean: true }
     );
     if (!invoice) {
@@ -50,6 +50,7 @@ exports.handleDispatchInvoice = async (jobData) => {
       deposit_address,
       deposit_crypto,
       deposit_network,
+      contact_email,
     } = invoice;
 
     // generate recurring invoice

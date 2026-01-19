@@ -309,7 +309,7 @@ const createInvoiceValidator = [
 router.post(
   "/create-invoice",
   uploadImage.single("companyLogo"),
-  createInvoiceValidator,
+  // createInvoiceValidator,
   catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
   catchAsync("createInvoice api", createInvoice)
 );

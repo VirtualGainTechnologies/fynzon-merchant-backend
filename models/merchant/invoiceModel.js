@@ -154,7 +154,7 @@ const invoiceSchema = new mongoose.Schema(
       ],
       validate: {
         validator: function (value) {
-          if (!value) return true;
+          if (!value || this.invoice_type === "RECURRING") return true;
           return /^\d{4}-\d{2}-\d{2}$/.test(value);
         },
         message: "Invalid issue_date format (YYYY-MM-DD)",
@@ -170,7 +170,7 @@ const invoiceSchema = new mongoose.Schema(
       ],
       validate: {
         validator: function (value) {
-          if (!value) return true;
+          if (!value || this.invoice_type === "RECURRING") return true;
           return /^\d{4}-\d{2}-\d{2}$/.test(value);
         },
         message: "Invalid due_date format (YYYY-MM-DD)",
