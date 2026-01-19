@@ -4,7 +4,7 @@ const { verifyOtp } = require("../../utils/verifyOtp");
 const {
   getMerchantByFilter,
   updateMerchantById,
-} = require("../../services/merchant/authServices");
+} = require("../../services/merchant/authService");
 const {
   updateMerchantKycByFilter,
   getMerchantKycByFilter,

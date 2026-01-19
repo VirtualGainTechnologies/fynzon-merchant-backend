@@ -4,10 +4,9 @@ const {
   getAllMerchantKycByFilter,
 } = require("../../services/merchant/kycServices");
 const {
-  getAllMerchantByFilter,
   updateMerchantById,
   getAllMerchantDetails,
-} = require("../../services/merchant/authServices");
+} = require("../../services/merchant/authService");
 const AppError = require("../../utils/AppError");
 const {
   updateApiSettingById,

@@ -7,6 +7,7 @@ const {
   getWelcomeLoginTemplate,
   getFailedLoginLockoutEmailTemplate,
   kycCompletionEmailTemplate,
+  invoicePaymentReminderEmailTemplate,
 } = require("./emailTemplates");
 const { logger } = require("./winstonLogger");
 
@@ -33,6 +34,10 @@ exports.sendEmail = async (emailData) => {
         subject =
           "Suspicious Activity Detected — Your Fynzon Account Is Temporarily Locked";
         body = await getFailedLoginLockoutEmailTemplate(emailData);
+        break;
+      case "invoice-alert":
+        subject = "Invoice Payment Reminder";
+        body = await invoicePaymentReminderEmailTemplate(emailData);
         break;
       default:
         throw new AppError(400, "Invalid email type");

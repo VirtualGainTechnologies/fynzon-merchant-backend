@@ -65,7 +65,7 @@ const invoiceSchema = new mongoose.Schema(
         type: String,
       },
       state: {
-        type: String
+        type: String,
       },
       country: {
         type: String,
@@ -350,10 +350,18 @@ const invoiceSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: {
-        values: ["PENDING", "SUCCESS", "FAILED","EXPIRED"],
+        values: [
+          "SCHEDULED",
+          "PENDING",
+          "SUCCESS",
+          "FAILED",
+          "EXPIRED",
+          "REJECTED",
+          "PAUSED",
+        ],
         message: "{value} is not supported",
       },
-      default: "PENDING",
+      default: "SCHEDULED",
     },
     date: {
       type: Number,

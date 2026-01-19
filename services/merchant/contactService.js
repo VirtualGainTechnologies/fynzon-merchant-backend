@@ -9,9 +9,7 @@ const {
 const { MerchantKycModel } = require("../../models/merchant/kycModel");
 const { MerchantWalletModel } = require("../../models/merchant/walletModel");
 const AppError = require("../../utils/AppError");
-const {
-  generateMerchantCryptoAddressData,
-} = require("./cryptoAddressServices");
+const { generateMerchantCryptoAddressData } = require("./cryptoAddressService");
 const { merchantWalletData } = require("./walletServices");
 
 //conatct types realted

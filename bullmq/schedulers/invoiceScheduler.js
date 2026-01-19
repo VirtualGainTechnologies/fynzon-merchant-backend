@@ -28,9 +28,9 @@ exports.scheduleInvoiceDispatch = async (data) => {
         },
       }
     );
-    logger.info(`Invoice Issue job added | jobId: ${jobId}`);
+    logger.info(`Invoice issue job added | jobId: ${jobId}`);
   } catch (err) {
-    logger.error(`Failed to add Invoice Issue job: ${err.message}`);
+    logger.error(`Failed to add invoice issue job: ${err.message}`);
     throw err;
   }
 };
@@ -62,9 +62,9 @@ exports.scheduleRecurringInvoiceDispatch = async (data) => {
         },
       }
     );
-    logger.info(`Invoice Issue job added | jobId: ${jobId}`);
+    logger.info(`Invoice issue job added | jobId: ${jobId}`);
   } catch (err) {
-    logger.error(`Failed to add Invoice Issue job: ${err.message}`);
+    logger.error(`Failed to add invoice issue job: ${err.message}`);
     throw err;
   }
 };
@@ -97,7 +97,7 @@ exports.scheduleInvoiceExpiry = async (data) => {
     );
     logger.info(`Invoice expiry job added | jobId: ${jobId}`);
   } catch (err) {
-    logger.error(`Failed to add Invoice expiry job: ${err.message}`);
+    logger.error(`Failed to add invoice expiry job: ${err.message}`);
     throw err;
   }
 };
@@ -125,7 +125,40 @@ exports.scheduleRecurringInvoiceExpiry = async (data) => {
     );
     logger.info(`Invoice expiry job added | jobId: ${jobId}`);
   } catch (err) {
-    logger.error(`Failed to add Invoice expiry job: ${err.message}`);
+    logger.error(`Failed to add invoice expiry job: ${err.message}`);
+    throw err;
+  }
+};
+
+exports.scheduleInvoiceAlert = async (data) => {
+  try {
+    const { alert_date, _id, tz = "UTC" } = data;
+    const jobId = String(
+      `alert-invoice-${_id} -${new Date(alert_date).getTime()} `
+    );
+    await invoiceQueue.add(
+      "INVOICE_ALERT",
+      { _id, tz },
+      {
+        jobId,
+        removeOnComplete: true,
+        removeOnFail: true,
+        delay: Math.max(
+          moment(alert_date, "YYYY-MM-DD", true, tz)
+            .startOf("day")
+            .diff(moment().tz(tz)),
+          0
+        ),
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5000,
+        },
+      }
+    );
+    logger.info(`Invoice alert job added | jobId: ${jobId}`);
+  } catch (err) {
+    logger.error(`Failed to add invoice alert job: ${err.message}`);
     throw err;
   }
 };

@@ -1,4 +1,4 @@
-const { getMerchantByFilter } = require("../../services/merchant/authServices");
+const { getMerchantByFilter } = require("../../services/merchant/authService");
 const {
   getMerchantKycByFilter,
 } = require("../../services/merchant/kycServices");

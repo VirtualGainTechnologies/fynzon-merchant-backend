@@ -1,4 +1,5 @@
 const moment = require("moment-timezone");
+const QRCode = require("qrcode");
 
 const {
   createInvoiceDoc,
@@ -16,10 +17,11 @@ const {
 const {
   getContactByFilter,
 } = require("../../services/merchant/contactService");
+const { uploadPublicFile } = require("../../utils/imageUpload");
+const { generateInvoicePdfBuffer } = require("../../utils/invoicePdfGenerator");
 
 exports.createInvoice = async (req, res) => {
   const {
-    companyLogo,
     contactAddress,
     contactName,
     contactType,
@@ -42,8 +44,16 @@ exports.createInvoice = async (req, res) => {
     recurring,
   } = req.body;
 
-  if (req.userType == "ENTITY" && !companyLogo) {
-    throw new AppError(400, "The field companyLogo is required");
+  let companyLogo = null;
+  if (req.userType == "ENTITY") {
+    if (!req.file) throw new AppError(400, "The field companyLogo is required");
+    else {
+      const imageData = await uploadPublicFile(req.file, req.fullName, 5);
+      if (imageData.error) {
+        throw new AppError(400, imageData.message);
+      }
+      companyLogo = imageData.data;
+    }
   }
 
   // check if invoice number already exists
@@ -207,4 +217,93 @@ exports.createInvoice = async (req, res) => {
     error: false,
     data: invoice,
   });
+};
+
+exports.downloadInvoice = async (req, res) => {
+  const {
+    contactName,
+    contactEmail,
+    contactPhone,
+    contactAddress,
+    depositCrypto,
+    depositNetwork,
+    depositAddress,
+    invoiceNumber,
+    orderDescription,
+    conversionRate,
+    items,
+    discountPercentage,
+    taxPercentage,
+    baseCurrency,
+    issueDate,
+    dueDate,
+  } = req.body;
+
+  let companyLogo = null;
+  if (req.userType == "ENTITY") {
+    if (!req.file) throw new AppError(400, "The field companyLogo is required");
+    else {
+      const imageData = await uploadPublicFile(req.file, req.fullName, 5);
+      if (imageData.error) {
+        throw new AppError(400, imageData.message);
+      }
+      companyLogo = imageData.data;
+    }
+  }
+
+  // prepare item list and calculate total amount
+  let totalCurrencyAmount = 0;
+  const itemList = JSON.parse(items).map((item) => {
+    const category = req.userCategory.toLowerCase();
+    if (category == "builder") {
+      totalCurrencyAmount += item.price * 1;
+      return {
+        category: req.userCategory,
+        project_name: item.projectName,
+        unit_number: item.unitNumber,
+        price: item.price,
+      };
+    } else {
+      totalCurrencyAmount += item.pricePerQuantity * item.quantity;
+      return {
+        category: req.userCategory,
+        name: item.name,
+        quantity: item.quantity,
+        price_per_quantity: item.pricePerQuantity,
+      };
+    }
+  });
+  const totalCryptoAmount =
+    (totalCurrencyAmount * conversionRate.cryptoAmount) /
+    conversionRate.currencyAmount;
+
+  // generate pdf
+  const pdfBuffer = await generateInvoicePdfBuffer({
+    company_logo: companyLogo || "",
+    contact_name: contactName,
+    contact_email: contactEmail,
+    contact_phone: contactPhone,
+    contact_address: JSON.parse(contactAddress),
+    deposit_crypto: depositCrypto,
+    deposit_network: depositNetwork,
+    deposit_address: depositAddress,
+    invoice_number: invoiceNumber,
+    order_description: orderDescription,
+    conversion_rate: JSON.parse(conversionRate),
+    items: itemList,
+    discount_percentage: discountPercentage,
+    tax_percentage: taxPercentage,
+    total_crypto_amount: totalCryptoAmount,
+    base_currency: baseCurrency,
+    qrCode: await QRCode.toDataURL(depositAddress),
+    userCategory: req.userCategory,
+    companyName: "",
+    issueDate: issueDate || "",
+    dueDate: dueDate || "",
+  });
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", 'attachment; filename="report.pdf"');
+  res.setHeader("Content-Length", pdfBuffer.length);
+  res.end(pdfBuffer);
 };

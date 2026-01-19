@@ -18,7 +18,8 @@ exports.generateInvoicePdfBuffer = async (invoiceData) => {
       format: "A4",
       printBackground: true,
     });
-    return Buffer.from(pdfBuffer);
+    const buffer = Buffer.from(pdfBuffer);
+    return Buffer.isBuffer(buffer) ? buffer : Buffer.from(pdfBuffer);
   } catch (err) {
     logger.error(`PDF generation failed: ${err.message}`);
     throw err;
@@ -31,11 +32,9 @@ exports.generateInvoicePdfBuffer = async (invoiceData) => {
 
 const generateInvoiceHtml = async (data) => {
   const {
-    mode,
     companyLogo,
     company_name,
     contact_name,
-    contact_type,
     contact_email,
     contact_phone,
     contact_address,
@@ -43,26 +42,18 @@ const generateInvoiceHtml = async (data) => {
     deposit_network,
     deposit_address,
     invoice_number,
-    invoice_type,
     order_description,
     conversion_rate,
-    issue_date,
-    due_date,
-    cron_pattern,
     items,
     userCategory,
     discount_percentage,
     tax_percentage,
-    total_currency_amount,
     total_crypto_amount,
-    newIssueDate,
-    newDueDate,
+    issueDate,
+    dueDate,
     base_currency = "AED",
     qrCode,
   } = data;
-
-  const issueDate = newIssueDate || issue_date;
-  const dueDate = newDueDate || due_date;
 
   let subtotal = 0;
   const isBuilder = userCategory?.toLowerCase() === "builder";

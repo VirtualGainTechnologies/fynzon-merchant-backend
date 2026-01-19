@@ -11,9 +11,7 @@ const AppError = require("../../utils/AppError");
 const {
   pvtltdToPrivateLimitedConverter,
 } = require("../../utils/pvtltdToPrivateLimitedConverter");
-const {
-  generateMerchantCryptoAddressData,
-} = require("./cryptoAddressServices");
+const { generateMerchantCryptoAddressData } = require("./cryptoAddressService");
 const { merchantWalletData } = require("./walletServices");
 
 exports.createMerchant = (object) => {

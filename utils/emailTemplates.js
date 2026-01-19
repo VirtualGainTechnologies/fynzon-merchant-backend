@@ -1733,3 +1733,192 @@ exports.getFailedLoginLockoutEmailTemplate = async (emailObject) => {
 </html>
 `;
 };
+
+exports.invoicePaymentReminderEmailTemplate = async (emailObject) => {
+  const { userName, invoiceNumber, dueDate, btnURL } =
+    emailObject;
+
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
+    <title>Invoice Due Alert</title>
+  </head>
+
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #fef3dc;
+      font-family: Arial, sans-serif;
+      color: #dadada;
+    "
+  >
+    <table
+      align="center"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      style="
+        width: 100%;
+        max-width: 736px;
+        margin: 20px auto;
+        background-color: #00162b;
+        border: 1px solid #222;
+        padding: 20px;
+      "
+    >
+      <!-- Logo -->
+      <tr>
+        <td style="text-align: center; padding: 20px">
+          <img
+            src="https://fynzon-prod-public-files.s3.ap-south-1.amazonaws.com/image-20-11-2024-331-fynzonlogopng"
+            alt="Fynzon Logo"
+            style="width: 150px; height: 30px"
+          />
+        </td>
+      </tr>
+
+      <!-- Title -->
+      <tr>
+        <td
+          style="
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 25px;
+            font-weight: 600;
+            color: #ffffff;
+          "
+        >
+          Invoice Due Reminder
+        </td>
+      </tr>
+
+      <!-- Illustration -->
+      <tr>
+        <td style="text-align: center; padding: 20px 0">
+          <img
+            src="https://fynzon-prod-public-files.s3.ap-south-1.amazonaws.com/image-20-11-2024-145-kyc1png"
+            alt="Invoice Alert"
+            style="width: 360px; height: 200px"
+          />
+        </td>
+      </tr>
+
+      <!-- Content -->
+      <tr>
+        <td
+          style="
+            padding: 15px 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #dadada;
+          "
+        >
+          Dear <strong>${userName}</strong>,<br /><br />
+
+          This is a reminder that the following invoice is <strong>due today</strong>.
+          Please ensure payment is completed to avoid any service interruption.<br /><br />
+
+          <strong>Invoice Number:</strong> ${invoiceNumber}<br />
+          <strong>Due Date:</strong> ${dueDate}<br />
+
+          If you have already completed the payment, please ignore this message.
+          Otherwise, you can proceed by clicking the button below.
+        </td>
+      </tr>
+
+      <!-- CTA -->
+      <tr>
+        <td style="text-align: center; padding: 20px">
+          <a
+            href="${btnURL}"
+            style="
+              background-color: #3E30D4;
+              color: #ffffff;
+              text-decoration: none;
+              padding: 12px 25px;
+              font-size: 16px;
+              font-weight: 500;
+              border-radius: 5px;
+              display: inline-block;
+            "
+          >
+            View Invoice
+          </a>
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td
+          style="
+            padding: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            color: #dadada;
+            border-top: 2px solid #2389c6;
+          "
+        >
+          <h2 style="margin: 10px 0; font-size: 15px; color: #ffffff">
+            Fynzon, India’s Leading Web3-Based Portal
+          </h2>
+          <a href="https://www.fynzon.com" style="color: #e6b800; text-decoration: none">
+            www.fynzon.com
+          </a>
+          |
+          <a href="mailto:support@fynzon.com" style="color: #e6b800; text-decoration: none">
+            support@fynzon.com
+          </a>
+          | +91 99220 11055
+        </td>
+      </tr>
+
+      <!-- Social -->
+      <tr>
+        <td style="text-align: center">
+          <center>
+            <div
+              style="
+                align-items: center;
+                text-align: center;
+                width: 397px;
+                font-weight: 500;
+                height: 32px;
+                gap: 24px;
+                border-top: 0.8px solid #2389c6;
+                padding: 15px 0;
+              "
+            >
+              Get Connected &nbsp;&nbsp;&nbsp;
+              <a href="https://www.facebook.com/Fynzon/" target="_blank">
+                <img src="https://fynzon-prod-public-files.s3.ap-south-1.amazonaws.com/crypto-02-08-2024-583-Frame-27129.png" style="width: 20px" />
+              </a>
+              <a href="https://www.instagram.com/fynzon/" target="_blank">
+                <img src="https://fynzon-prod-public-files.s3.ap-south-1.amazonaws.com/crypto-02-08-2024-216-Frame-27128.png" style="width: 20px" />
+              </a>
+              <a href="https://t.me/cremittalk" target="_blank">
+                <img src="https://fynzon-prod-public-files.s3.ap-south-1.amazonaws.com/crypto-02-08-2024-567-Frame-27125.png" style="width: 20px" />
+              </a>
+              <a href="https://x.com/fynzonteam" target="_blank">
+                <img src="https://fynzon-prod-public-files.s3.ap-south-1.amazonaws.com/crypto-02-08-2024-173-Frame-27127.png" style="width: 20px" />
+              </a>
+              <a href="https://linkedin.com/company/fynzon" target="_blank">
+                <img src="https://fynzon-prod-public-files.s3.ap-south-1.amazonaws.com/crypto-02-08-2024-826-linked-in.png" style="width: 20px" />
+              </a>
+              <a href="https://www.youtube.com/@fynzoncryptoexchange" target="_blank">
+                <img src="https://fynzon-prod-public-files.s3.ap-south-1.amazonaws.com/crypto-02-08-2024-623-Frame-27126.png" style="width: 20px" />
+              </a>
+            </div>
+          </center>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+};

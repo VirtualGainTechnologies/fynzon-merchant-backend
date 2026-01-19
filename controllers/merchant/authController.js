@@ -10,7 +10,7 @@ const {
   registerMerchant,
   updateMerchantByFilter,
   getMerchantByFilter,
-} = require("../../services/merchant/authServices");
+} = require("../../services/merchant/authService");
 const { sendEmail } = require("../../utils/emailDispatcher");
 const {
   getMerchantKycByFilter,
@@ -21,7 +21,7 @@ const {
 const { verifyJwtToken } = require("../../utils/verifyJwtToken");
 const {
   getMerchantCryptoAddressByFilter,
-} = require("../../services/merchant/cryptoAddressServices");
+} = require("../../services/merchant/cryptoAddressService");
 
 exports.validateMerchant = async (req, res) => {
   const req_body = { ...req.body };

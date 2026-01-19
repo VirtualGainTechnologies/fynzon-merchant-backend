@@ -2,9 +2,11 @@ const router = require("express").Router();
 const { body } = require("express-validator");
 const moment = require("moment-timezone");
 
+const { uploadImage } = require("../../utils/imageUpload");
 const { catchAsync } = require("../../utils/catchAsync");
 const {
   createInvoice,
+  downloadInvoice,
 } = require("../../controllers/merchant/invoiceController");
 const {
   verifyMerchantToken,
@@ -306,9 +308,17 @@ const createInvoiceValidator = [
 
 router.post(
   "/create-invoice",
+  uploadImage.single("companyLogo"),
   createInvoiceValidator,
   catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
   catchAsync("createInvoice api", createInvoice)
+);
+
+router.post(
+  "/download-invoice",
+  uploadImage.single("companyLogo"),
+  catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
+  catchAsync("downloadInvoice api", downloadInvoice)
 );
 
 module.exports = router;

@@ -22,12 +22,23 @@ const invoiceWorker = new Worker(
       lock = await redlock.acquire([lockKey], LOCK_TTL);
       logger.info(`Lock acquired: ${lockKey}`);
 
-      if (job.name === "ISSUE_INVOICE") {
-        await handleDispatchInvoice(job.data);
-      }
+      switch (job.name) {
+        case "ISSUE_INVOICE":
+          await handleDispatchInvoice(job.data);
+          break;
 
-      if (job.name === "EXPIRE_INVOICE") {
-        await handleExpireInvoice(job.data);
+        case "EXPIRE_INVOICE":
+          await handleExpireInvoice(job.data);
+          break;
+
+        case "INVOICE_ALERT":
+          await handleExpireInvoice(job.data);
+          break;
+
+        default:
+          logger.warn(
+            `[INVOICE_WORKER] Unknown job name received: ${job.name}`
+          );
       }
     } catch (err) {
       logger.warn(`Job failed | id=${job.id}`);
