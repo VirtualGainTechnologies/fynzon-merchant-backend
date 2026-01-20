@@ -24,7 +24,7 @@ exports.getContactTypeById = (id, projections = null, options = {}) => {
 exports.getContactTypeByFilter = (
   filters = {},
   projections = null,
-  options = {}
+  options = {},
 ) => {
   return ContactTypeModel.findOne(filters, projections, options);
 };
@@ -32,7 +32,7 @@ exports.getContactTypeByFilter = (
 exports.getAllContactTypesByFilter = (
   filters = {},
   projections = null,
-  options = {}
+  options = {},
 ) => {
   return ContactTypeModel.find(filters, projections, options);
 };
@@ -44,7 +44,7 @@ exports.updateContactTypeById = (id, updateObject, options = {}) => {
 exports.updateContactTypeByFilter = (
   filters = {},
   updateObject = {},
-  options = {}
+  options = {},
 ) => {
   return ContactTypeModel.findOneAndUpdate(filters, updateObject, options);
 };
@@ -52,7 +52,7 @@ exports.updateContactTypeByFilter = (
 exports.updateAllContactTypesByFilter = (
   filters = {},
   updateObject = {},
-  options = {}
+  options = {},
 ) => {
   return ContactTypeModel.updateMany(filters, updateObject, options);
 };
@@ -65,7 +65,7 @@ exports.getContactById = (id, projections = null, options = {}) => {
 exports.getContactByFilter = (
   filters = {},
   projections = null,
-  options = {}
+  options = {},
 ) => {
   return ContactModel.findOne(filters, projections, options);
 };
@@ -73,7 +73,7 @@ exports.getContactByFilter = (
 exports.getAllContactsByFilter = (
   filters = {},
   projections = null,
-  options = {}
+  options = {},
 ) => {
   return ContactModel.find(filters, projections, options);
 };
@@ -85,7 +85,7 @@ exports.updateContactById = (id, updateObject, options = {}) => {
 exports.updateContactByFilter = (
   filters = {},
   updateObject = {},
-  options = {}
+  options = {},
 ) => {
   return ContactModel.findOneAndUpdate(filters, updateObject, options);
 };
@@ -93,7 +93,7 @@ exports.updateContactByFilter = (
 exports.updateAllContactsByFilter = (
   filters = {},
   updateObject = {},
-  options = {}
+  options = {},
 ) => {
   return ContactModel.updateMany(filters, updateObject, options);
 };
@@ -173,6 +173,7 @@ exports.getAllSingleContacts = (options) => {
               taxId: "$tax_id",
               contactType: "$contact_type",
               contactName: "$contact_name",
+              companyName: "$company_name",
               note: "$note",
               status: "$status",
               date: {
@@ -254,11 +255,11 @@ exports.createContact = async (payload, session) => {
           !wallet
             ? "wallet"
             : !cryptoAddress
-            ? "crypto address"
-            : kyc
-            ? "kyc"
-            : ""
-        }`
+              ? "crypto address"
+              : kyc
+                ? "kyc"
+                : ""
+        }`,
       );
     }
 
@@ -280,7 +281,7 @@ exports.createContact = async (payload, session) => {
 exports.getContactByFilter = (
   filter = {},
   projections = null,
-  options = {}
+  options = {},
 ) => {
   return ContactModel.findOne(filter, projections, options);
 };
