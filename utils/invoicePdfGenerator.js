@@ -95,10 +95,10 @@ const generateInvoiceHtml = async (data) => {
         return `
           <tr style="height: 30px;">
             <td style="text-align: start; border-top: 1px solid grey;padding-left:10px">
-              ${item.projectName || "Project"}
+              ${item.project_name || "Project"}
             </td>
             <td style="text-align: center; border-top: 1px solid grey;">
-              ${item.unitNumber || "-"}
+              ${item.unit_number || "-"}
             </td>
             <td style="text-align: center; border-top: 1px solid grey;">
               ${formatCurrency(price)}
@@ -175,7 +175,7 @@ const generateInvoiceHtml = async (data) => {
         <p>Issue Date: ${issueDate}</p>
         <p>Due Date: ${dueDate}</p>
       </div>
-      <div>
+      <div style="max-width:320px;">
         <p>Base Currency: ${base_currency}</p>
         <p>
           Conversion Rate:
@@ -247,7 +247,7 @@ const generateInvoiceHtml = async (data) => {
     <p>Registration/Tax Id: ${tax_id || "N/A"}</p>
 
     </div>
-    <div>
+    <div style="max-width:320px;">
     <p>Address: ${contact_address.full_address}</p>
     <p>City: ${contact_address.city}</p>
     <p>State: ${contact_address.state || "N/A"}</p>
@@ -265,7 +265,7 @@ const generateInvoiceHtml = async (data) => {
     <p>${merchant.type == "INDIVIDUAL" ? "Full Name" : "Business Name"}:${merchant.name}</p>
     <p>Email:${merchant.email}</p>
     </div>
-    <div>
+    <div style="max-width:320px;">
     <p>Phone:${merchant.phone}</p>
     <p>Address:${merchant.address}</p>
     </div>
