@@ -32,8 +32,7 @@ exports.generateInvoicePdfBuffer = async (invoiceData) => {
 
 const generateInvoiceHtml = async (data) => {
   const {
-    companyLogo,
-    company_name,
+    company_logo,
     contact_name,
     contact_email,
     contact_phone,
@@ -45,39 +44,44 @@ const generateInvoiceHtml = async (data) => {
     order_description,
     conversion_rate,
     items,
+    contact_type,
     userCategory,
     discount_percentage,
     tax_percentage,
-    total_crypto_amount,
+    total_currency_amount,
     issueDate,
     dueDate,
-    base_currency = "AED",
     qrCode,
+    merchant,
+    tax_id,
+    company_name,
   } = data;
 
-  let subtotal = 0;
+  const base_currency = conversion_rate.currency;
   const isBuilder = userCategory?.toLowerCase() === "builder";
 
-  const formatCurrency = (num) =>
-    Number(num || 0)
-      .toFixed(2)
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const formatCurrency = (num) => {
+    const digit = base_currency == "AED" ? 3 : 2;
+    return Number(num || 0)
+      .toFixed(digit)
+      .replace(/\B(?=(\d{digit})+(?!\d))/g, ",");
+  };
 
   /* ---------------- TABLE HEADERS ---------------- */
   const tableHeader = isBuilder
     ? `
       <tr style="height: 30px; background-color: aliceblue;">
-        <th style="text-align: start; border-top: 1px solid grey;">Project</th>
-        <th style="text-align: center; border-top: 1px solid grey;">Unit</th>
+        <th style="text-align: start; border-top: 1px solid grey;padding-left:10px">Project Name</th>
+        <th style="text-align: center; border-top: 1px solid grey;">Unit Number</th>
         <th style="text-align: center; border-top: 1px solid grey;">Price</th>
         <th style="text-align: center; border-top: 1px solid grey;">Total (${base_currency})</th>
       </tr>
     `
     : `
       <tr style="height: 30px; background-color: aliceblue;">
-        <th style="text-align: start; border-top: 1px solid grey;">Item</th>
+        <th style="text-align: start; border-top: 1px solid grey;padding-left:10px;">Item</th>
         <th style="text-align: center; border-top: 1px solid grey;">Quantity</th>
-        <th style="text-align: center; border-top: 1px solid grey;">Price / Qty</th>
+        <th style="text-align: center; border-top: 1px solid grey;">Price Per Quantity</th>
         <th style="text-align: center; border-top: 1px solid grey;">Total (${base_currency})</th>
       </tr>
     `;
@@ -87,11 +91,10 @@ const generateInvoiceHtml = async (data) => {
     .map((item) => {
       if (isBuilder) {
         const price = Number(item.price || 0);
-        subtotal += price;
 
         return `
           <tr style="height: 30px;">
-            <td style="text-align: start; border-top: 1px solid grey;">
+            <td style="text-align: start; border-top: 1px solid grey;padding-left:10px">
               ${item.projectName || "Project"}
             </td>
             <td style="text-align: center; border-top: 1px solid grey;">
@@ -108,13 +111,12 @@ const generateInvoiceHtml = async (data) => {
       }
 
       const quantity = Number(item.quantity || 0);
-      const price = Number(item.pricePerQuantity || 0);
+      const price = Number(item.price_per_quantity || 0);
       const itemTotal = quantity * price;
-      subtotal += itemTotal;
 
       return `
         <tr style="height: 30px;">
-          <td style="text-align: start; border-top: 1px solid grey;">
+          <td style="text-align: start; border-top: 1px solid grey;padding-left:10px">
             ${item.name || "Item"}
           </td>
           <td style="text-align: center; border-top: 1px solid grey;">
@@ -131,10 +133,14 @@ const generateInvoiceHtml = async (data) => {
     })
     .join("");
 
-  const taxAmount = (subtotal * (tax_percentage || 0)) / 100;
-  const discountAmount = (subtotal * (discount_percentage || 0)) / 100;
-  const finalPayable = subtotal + taxAmount - discountAmount;
-
+  const taxAmount = (total_currency_amount * (tax_percentage || 0)) / 100;
+  const discountAmount =
+    (total_currency_amount * (discount_percentage || 0)) / 100;
+  const totalCurrencyAmount =
+    total_currency_amount + taxAmount - discountAmount;
+  const totalCryptoAmount =
+    (totalCurrencyAmount * conversion_rate.crypto_amount) /
+    conversion_rate.currency_amount;
   /* ---------------- HTML TEMPLATE ---------------- */
   return `
 <div style="
@@ -150,7 +156,11 @@ const generateInvoiceHtml = async (data) => {
   <!-- Header -->
   <div style="display: flex; justify-content: space-between; align-items: center;">
     <div style="font-size: 32px; font-weight: 600;">Invoice</div>
-    <img src="${companyLogo || ""}" alt="company_logo" width="30" height="30" />
+    ${
+      company_logo
+        ? `<img src="${company_logo}" alt="company_logo" width="30" height="30" />`
+        : ""
+    }
   </div>
 
   <hr style="margin: 15px 0;" />
@@ -181,30 +191,29 @@ const generateInvoiceHtml = async (data) => {
   <div style="border: 1px solid grey; padding: 20px 40px; border-radius: 10px; margin-top: 10px;">
     <div style="font-weight: 600; font-size: 16px;">Amount Details</div>
 
-    <table style="width: 100%; margin-top: 20px; border-spacing: 0; font-size: 10px;">
+    <table style="width: 100%; margin-top: 20px; border-spacing: 0; font-size: 10px;border-bottom:1px solid grey">
       ${tableHeader}
       ${tableRows}
     </table>
 
     <div style="margin-top: 20px;">
-      <div style="display: flex; justify-content: space-between;">
-        <div>Subtotal:</div>
-        <div>${formatCurrency(subtotal)} ${base_currency}</div>
+     <div><b>Price Breakup:</b></div>
+      <div style="display: flex; justify-content: space-between;margin-block:5px">
+        <div>Total Invoice Amount:</div>
+        <div>${formatCurrency(total_currency_amount)} ${base_currency}</div>
       </div>
       <div style="display: flex; justify-content: space-between;">
         <div>Tax (${tax_percentage || 0}%):</div>
         <div>${formatCurrency(taxAmount)} ${base_currency}</div>
       </div>
-      <div style="display: flex; justify-content: space-between;">
+      <div style="display: flex; justify-content: space-between;margin-block:5px">
         <div>Discount (${discount_percentage || 0}%):</div>
         <div>${formatCurrency(discountAmount)} ${base_currency}</div>
       </div>
-      <div style="display: flex; justify-content: space-between; font-weight: 600;">
-        <div>Amount to be Paid:</div>
+      <div style="display: flex; justify-content: space-between; font-weight: 600;margin-block:10px">
+        <div><b>Amount to be Paid:</b></div>
         <div style="color: dodgerblue;">
-          ${
-            total_crypto_amount || formatCurrency(finalPayable)
-          } ${deposit_crypto}
+          ${totalCryptoAmount.toFixed(6)} ${deposit_crypto}
         </div>
       </div>
     </div>
@@ -213,26 +222,54 @@ const generateInvoiceHtml = async (data) => {
   <!-- Payment Wallet -->
   <div style="border: 1px solid grey; padding: 20px 40px; border-radius: 10px; margin-top: 10px;">
     <div style="font-weight: 600; font-size: 16px;">Payment Wallet Details</div>
+    <div style="display: flex; justify-content: space-between;">
+    <div>
     <p>Crypto: ${deposit_crypto}</p>
     <p>Network: ${deposit_network}</p>
-    <p>Address: ${deposit_address}</p>
+    <p>Network Address: ${deposit_address}</p>
+    </div>
+    <div>
     ${qrCode ? `<img src="${qrCode}" width="100" />` : ""}
+    </div>
+    </div>
   </div>
 
   <!-- Received By -->
   <div style="border: 1px solid grey; padding: 20px 40px; border-radius: 10px; margin-top: 10px;">
     <div style="font-weight: 600; font-size: 16px;">Received By</div>
-    <p>${company_name || "N/A"}</p>
-    <p>${contact_email}</p>
-    <p>${contact_phone}</p>
-    <p>${contact_address?.full_address || ""}</p>
+    <div style="display: flex; justify-content: space-between;">
+    <div>
+    <p>Contact Name: ${contact_name}</p>
+    <p>Contact Type: ${contact_type}</p>
+    <p>Email: ${contact_email}</p>
+    <p>Phone: ${contact_phone || "N/A"}</p>
+    <p>Company Name: ${company_name || "N/A"}</p>
+    <p>Registration/Tax Id: ${tax_id || "N/A"}</p>
+
+    </div>
+    <div>
+    <p>Address: ${contact_address.full_address}</p>
+    <p>City: ${contact_address.city}</p>
+    <p>State: ${contact_address.state || "N/A"}</p>
+    <p>Country: ${contact_address.country}</p>
+    <p>Zip Code: ${contact_address.zip || "N/A"}</p>
+    </div>
+    </div>
   </div>
 
   <!-- Received From -->
   <div style="border: 1px solid grey; padding: 20px 40px; border-radius: 10px; margin-top: 10px;">
     <div style="font-weight: 600; font-size: 16px;">Received From</div>
-    <p>${contact_name}</p>
-    <p>${contact_email}</p>
+    <div style="display: flex; justify-content: space-between;">
+    <div>
+    <p>${merchant.type == "INDIVIDUAL" ? "Full Name" : "Business Name"}:${merchant.name}</p>
+    <p>Email:${merchant.email}</p>
+    </div>
+    <div>
+    <p>Phone:${merchant.phone}</p>
+    <p>Address:${merchant.address}</p>
+    </div>
+    </div>
   </div>
 
 </div>

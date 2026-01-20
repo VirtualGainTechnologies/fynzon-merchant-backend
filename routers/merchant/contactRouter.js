@@ -27,7 +27,7 @@ const createContactTypeValidator = [
     .withMessage("The field contactType is required")
     .matches(/^(?!^\d+$)[A-Za-z\d]+$/)
     .withMessage(
-      "contactType must be only letters or a combination of letters and numbers"
+      "contactType must be only letters or a combination of letters and numbers",
     )
     .isLength({ min: 2 })
     .withMessage("contactType must be at least 2 characters long")
@@ -49,12 +49,13 @@ const createOrUpdateContactValidator = [
     .toUpperCase()
     .isIn(["TEST", "LIVE"])
     .withMessage("The field mode must be either 'TEST' or 'LIVE'"),
+  body("companyName").optional(),
   body("contactName")
     .trim()
     .notEmpty()
     .withMessage("The field contactName is required")
     .withMessage(
-      "contactName must be only letters or a combination of letters and numbers"
+      "contactName must be only letters or a combination of letters and numbers",
     )
     .isLength({ min: 2 })
     .withMessage("contactName must be at least 2 characters long"),
@@ -64,7 +65,7 @@ const createOrUpdateContactValidator = [
     .withMessage("The field contactType is required")
     .matches(/^(?!^\d+$)[A-Za-z\d]+$/)
     .withMessage(
-      "contactType must be only letters or a combination of letters and numbers"
+      "contactType must be only letters or a combination of letters and numbers",
     )
     .isLength({ min: 2 })
     .withMessage("contactType must be at least 2 characters long")
@@ -136,13 +137,13 @@ router
     "/create-contact-type",
     createContactTypeValidator,
     catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
-    catchAsync("createContactType api", createContactType)
+    catchAsync("createContactType api", createContactType),
   )
   .get(
     "/get-contact-types",
     modeQueryValidator,
     catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
-    catchAsync("getContactTypes api", getContactTypes)
+    catchAsync("getContactTypes api", getContactTypes),
   );
 
 // contact
@@ -151,13 +152,13 @@ router
     "/upsert-contact",
     createOrUpdateContactValidator,
     catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
-    catchAsyncWithSession("createOrUpdateContact api", createOrUpdateContact)
+    catchAsyncWithSession("createOrUpdateContact api", createOrUpdateContact),
   )
   .get(
     "/all-contacts",
     modeQueryValidator,
     catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
-    catchAsync("getAllContacts api", getAllContacts)
+    catchAsync("getAllContacts api", getAllContacts),
   );
 
 module.exports = router;

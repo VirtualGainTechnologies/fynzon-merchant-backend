@@ -35,7 +35,7 @@ const contactTypeSchema = new mongoose.Schema(
       },
     ],
   },
-  { versionKey: false, timestamps: true }
+  { versionKey: false, timestamps: true },
 );
 
 const ContactTypeModel = mongoose.model("contact-type", contactTypeSchema);
@@ -54,6 +54,9 @@ const contactSchema = new mongoose.Schema(
       required: [true, "The field user_email is required"],
       lowercase: true,
       validate: [validator.isEmail, "The field user_email is invalid"],
+    },
+    company_name: {
+      type: String,
     },
     mode: {
       type: String,
@@ -151,7 +154,7 @@ const contactSchema = new mongoose.Schema(
       default: new Date().getTime(),
     },
   },
-  { versionKey: false, timestamps: true }
+  { versionKey: false, timestamps: true },
 );
 
 const ContactModel = mongoose.model("contact", contactSchema);

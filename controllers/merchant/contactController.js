@@ -22,19 +22,19 @@ exports.createContactType = async (req, res) => {
   const contactTypes = await getContactTypeByFilter(
     { user_id: req.userId },
     "_id contact_types",
-    { lean: true }
+    { lean: true },
   );
   if (contactTypes) {
     // check if contact type already exists inside the array
     const isContactTypeExists = contactTypes.contact_types?.some(
-      (item) => item.mode === mode && item.name === contactType
+      (item) => item.mode === mode && item.name === contactType,
     );
     if (isContactTypeExists) {
       throw new AppError(400, "This contact type already exists");
     }
   }
   const contactTypeArray = contactTypes?.contact_types.filter(
-    (item) => item.mode === mode
+    (item) => item.mode === mode,
   ).length
     ? [
         {
@@ -74,7 +74,7 @@ exports.createContactType = async (req, res) => {
     {
       new: true,
       upsert: true,
-    }
+    },
   );
 
   if (!createdContact) {
@@ -150,7 +150,7 @@ exports.createOrUpdateContact = async (req, session) => {
       "_id contact_email contact_phone",
       {
         lean: true,
-      }
+      },
     );
 
     if (existingUser) {
@@ -158,8 +158,8 @@ exports.createOrUpdateContact = async (req, session) => {
         req_body?.email && existingUser?.contact_email === req_body?.email
           ? "This email already exists"
           : req_body?.phone && existingUser?.contact_phone === req_body?.phone
-          ? "This phone number already exists"
-          : "Email or phone number is missing";
+            ? "This phone number already exists"
+            : "Email or phone number is missing";
       throw new AppError(400, message);
     }
   }
@@ -173,6 +173,7 @@ exports.createOrUpdateContact = async (req, session) => {
     }),
     mode: req_body.mode,
     contact_name: req_body.contactName,
+    company_name: req_body.companyName,
     contact_type: req_body.contactType,
     ...(req_body.phone && {
       contact_phone: req_body.phone,
@@ -213,7 +214,7 @@ exports.createOrUpdateContact = async (req, session) => {
         contact_email: req_body.email,
       },
       payload,
-      { new: true }
+      { new: true },
     );
 
     if (!contactData) {

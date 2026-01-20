@@ -19,6 +19,7 @@ const {
 } = require("../../services/merchant/contactService");
 const { uploadPublicFile } = require("../../utils/imageUpload");
 const { generateInvoicePdfBuffer } = require("../../utils/invoicePdfGenerator");
+const { getMerchantById } = require("../../services/merchant/authService");
 
 exports.createInvoice = async (req, res) => {
   const {
@@ -237,6 +238,7 @@ exports.downloadInvoice = async (req, res) => {
     taxPercentage,
     issueDate,
     dueDate,
+    contactType,
   } = req.body;
 
   // upload logo
@@ -274,9 +276,44 @@ exports.downloadInvoice = async (req, res) => {
       };
     }
   });
-  const totalCryptoAmount =
-    (totalCurrencyAmount * conversionRate.cryptoAmount) /
-    conversionRate.currencyAmount;
+
+  // get merchant details
+  const merchant = await getMerchantById(
+    req.userId,
+    "user_type phone full_name business_name email",
+    {
+      populate: {
+        path: "kyc_id",
+        select: "aadhaar gstin",
+      },
+      lean: true,
+    },
+  );
+  const { kyc_id, user_type, full_name, business_name, email, phone } =
+    merchant;
+  const merchantAddress =
+    user_type == "INDIVIDUAL"
+      ? kyc_id.aadhaar?.address?.address_line
+        ? `${kyc_id.aadhaar?.address?.address_line} ${kyc_id.aadhaar?.address?.city} ${kyc_id.aadhaar?.address?.district} ${kyc_id.aadhaar?.address?.state} ${kyc_id.aadhaar?.address?.country} pin-${kyc_id.aadhaar?.address?.pin_code}`
+        : "N/A"
+      : kyc_id.gstin?.address?.address_line
+        ? `${kyc_id.gstin?.address?.address_line} ${kyc_id.gstin?.address?.city} ${kyc_id.gstin?.address?.district} ${kyc_id.gstin?.address?.state} ${kyc_id.gstin?.address?.country} pin-${kyc_id.gstin?.address?.pin_code}`
+        : "N/A";
+
+  // get contact details
+  const contact = await getContactByFilter(
+    {
+      user_id: req.userId,
+      contact_email: contactEmail,
+    },
+    "_id company_name tax_id",
+    {
+      lean: true,
+    },
+  );
+  if (!contact) {
+    throw new AppError(400, "No contact found with this email");
+  }
 
   // generate pdf
   const pdfBuffer = await generateInvoicePdfBuffer({
@@ -297,6 +334,7 @@ exports.downloadInvoice = async (req, res) => {
     deposit_address: depositAddress,
     invoice_number: invoiceNumber,
     order_description: orderDescription,
+    contact_type: contactType,
     conversion_rate: {
       currency: conversionRate.currency,
       crypto: conversionRate.crypto,
@@ -306,16 +344,28 @@ exports.downloadInvoice = async (req, res) => {
     items: itemList,
     discount_percentage: discountPercentage,
     tax_percentage: taxPercentage,
-    total_crypto_amount: totalCryptoAmount,
     qrCode: await QRCode.toDataURL(depositAddress),
     userCategory: req.userCategory,
     companyName: "",
     issueDate: issueDate || "",
     dueDate: dueDate || "",
+    total_currency_amount: totalCurrencyAmount,
+    merchant: {
+      type: user_type,
+      name: user_type == "INDIVIDUAL" ? full_name : business_name,
+      email: email,
+      phone: phone,
+      address: merchantAddress,
+    },
+    company_name: contact.company_name,
+    tax_id: contact.tax_id,
   });
 
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", 'attachment; filename="report.pdf"');
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=${"invoice-" + invoiceNumber}`,
+  );
   res.setHeader("Content-Length", pdfBuffer.length);
   res.end(pdfBuffer);
 };
