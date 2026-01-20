@@ -3,6 +3,7 @@ const { Worker } = require("bullmq");
 const {
   handleDispatchInvoice,
   handleExpireInvoice,
+  handleAlertInvoice,
 } = require("../processors/invoiceProcessor");
 const { INVOICE_QUEUE_NAME } = require("../queues/invoiceQueue");
 const { redis, redlock } = require("./../redis");
@@ -32,7 +33,7 @@ const invoiceWorker = new Worker(
           break;
 
         case "INVOICE_ALERT":
-          await handleExpireInvoice(job.data);
+          await handleAlertInvoice(job.data);
           break;
 
         default:

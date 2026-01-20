@@ -19,14 +19,14 @@ exports.scheduleInvoiceDispatch = async (data) => {
           moment(issue_date, "YYYY-MM-DD", true, tz)
             .startOf("day")
             .diff(moment().tz(tz)),
-          0
+          0,
         ),
         attempts: 3,
         backoff: {
           type: "exponential",
           delay: 5000,
         },
-      }
+      },
     );
     logger.info(`Invoice issue job added | jobId: ${jobId}`);
   } catch (err) {
@@ -60,7 +60,7 @@ exports.scheduleRecurringInvoiceDispatch = async (data) => {
           type: "exponential",
           delay: 5000,
         },
-      }
+      },
     );
     logger.info(`Invoice issue job added | jobId: ${jobId}`);
   } catch (err) {
@@ -86,14 +86,14 @@ exports.scheduleInvoiceExpiry = async (data) => {
             .tz(due_date, "YYYY-MM-DD", true, tz)
             .endOf("day")
             .diff(moment().tz(tz)),
-          0
+          0,
         ),
         attempts: 3,
         backoff: {
           type: "exponential",
           delay: 5000,
         },
-      }
+      },
     );
     logger.info(`Invoice expiry job added | jobId: ${jobId}`);
   } catch (err) {
@@ -106,7 +106,7 @@ exports.scheduleRecurringInvoiceExpiry = async (data) => {
   try {
     const { issue_date, _id, due_days } = data;
     const jobId = String(
-      `expire-invoice-${_id.toString()}-${new Date(issue_date).getTime()}`
+      `expire-invoice-${_id.toString()}-${new Date(issue_date).getTime()}`,
     );
     await invoiceQueue.add(
       "EXPIRE_INVOICE",
@@ -121,7 +121,7 @@ exports.scheduleRecurringInvoiceExpiry = async (data) => {
           type: "exponential",
           delay: 5000,
         },
-      }
+      },
     );
     logger.info(`Invoice expiry job added | jobId: ${jobId}`);
   } catch (err) {
@@ -134,11 +134,11 @@ exports.scheduleInvoiceAlert = async (data) => {
   try {
     const { alert_date, _id, tz = "UTC" } = data;
     const jobId = String(
-      `alert-invoice-${_id} -${new Date(alert_date).getTime()} `
+      `alert-invoice-${_id} -${new Date(alert_date).getTime()} `,
     );
     await invoiceQueue.add(
       "INVOICE_ALERT",
-      { _id, tz },
+      { _id },
       {
         jobId,
         removeOnComplete: true,
@@ -147,14 +147,14 @@ exports.scheduleInvoiceAlert = async (data) => {
           moment(alert_date, "YYYY-MM-DD", true, tz)
             .startOf("day")
             .diff(moment().tz(tz)),
-          0
+          0,
         ),
         attempts: 3,
         backoff: {
           type: "exponential",
           delay: 5000,
         },
-      }
+      },
     );
     logger.info(`Invoice alert job added | jobId: ${jobId}`);
   } catch (err) {

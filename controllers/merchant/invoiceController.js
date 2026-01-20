@@ -44,11 +44,6 @@ exports.createInvoice = async (req, res) => {
     recurring = null,
   } = req.body;
 
-  // parse data
-  const conversion_rate = JSON.parse(conversionRate);
-  const contact_address = JSON.parse(contactAddress);
-  const recurringValues = recurring ? JSON.parse(recurring) : null;
-
   // upload logo
   let companyLogo = null;
   if (req.userType == "ENTITY") {
@@ -66,7 +61,7 @@ exports.createInvoice = async (req, res) => {
   const invoiceExists = await getInvoiceByFilter(
     { invoice_number: invoiceNumber },
     "_id",
-    { lean: true }
+    { lean: true },
   );
   if (invoiceExists) {
     throw new AppError(400, "Invoice number already exists");
@@ -86,7 +81,7 @@ exports.createInvoice = async (req, res) => {
         path: "crypto_address_id",
         select: network,
       },
-    }
+    },
   );
   if (!contact) {
     throw new AppError(400, "No contact found with this email");
@@ -100,13 +95,13 @@ exports.createInvoice = async (req, res) => {
   if (cryptoAddress.address !== depositAddress) {
     throw new AppError(
       400,
-      "Deposit address does not match the contact address"
+      "Deposit address does not match the contact address",
     );
   }
 
   // prepare item list and calculate total amount
   let totalCurrencyAmount = 0;
-  const itemList = JSON.parse(items).map((item) => {
+  const itemList = items.map((item) => {
     const category = req.userCategory.toLowerCase();
     if (category == "builder") {
       totalCurrencyAmount += item.price * 1;
@@ -127,8 +122,8 @@ exports.createInvoice = async (req, res) => {
     }
   });
   const totalCryptoAmount =
-    (totalCurrencyAmount * conversion_rate.cryptoAmount) /
-    conversion_rate.currencyAmount;
+    (totalCurrencyAmount * conversionRate.cryptoAmount) /
+    conversionRate.currencyAmount;
 
   // create invoice
   const invoice = await createInvoiceDoc({
@@ -141,12 +136,12 @@ exports.createInvoice = async (req, res) => {
     contact_email: contactEmail,
     contact_phone: contactPhone,
     contact_address: {
-      city: contact_address.city,
-      zip: contact_address?.zip || "N/A",
-      state: contact_address?.state || "N/A",
-      country: contact_address.country,
-      country_code: contact_address.countryCode,
-      full_address: contact_address.fullAddress,
+      city: contactAddress.city,
+      zip: contactAddress?.zip || "N/A",
+      state: contactAddress?.state || "N/A",
+      country: contactAddress.country,
+      country_code: contactAddress.countryCode,
+      full_address: contactAddress.fullAddress,
     },
     deposit_crypto: depositCrypto,
     deposit_network: depositNetwork,
@@ -155,29 +150,29 @@ exports.createInvoice = async (req, res) => {
     invoice_type: invoiceType,
     order_description: orderDescription,
     conversion_rate: {
-      currency: conversion_rate.currency,
-      crypto: conversion_rate.crypto,
-      currency_amount: conversion_rate.currencyAmount,
-      crypto_amount: conversion_rate.cryptoAmount,
+      currency: conversionRate.currency,
+      crypto: conversionRate.crypto,
+      currency_amount: conversionRate.currencyAmount,
+      crypto_amount: conversionRate.cryptoAmount,
     },
     issue_date: invoiceType !== "RECURRING" ? issueDate : "N/A",
     due_date: invoiceType !== "RECURRING" ? dueDate : "N/A",
-    ...(recurringValues && {
+    ...(recurring && {
       recurring: {
-        every: recurringValues.every,
-        ...(recurringValues.every == "week"
+        every: recurring.every,
+        ...(recurring.every == "week"
           ? {
-              day: recurringValues.day,
+              day: recurring.day,
             }
-          : recurringValues.every == "month"
-          ? {
-              date: recurringValues.date,
-            }
-          : {
-              month: recurringValues.month,
-              date: recurringValues.date,
-            }),
-        due_days: recurringValues.dueDays,
+          : recurring.every == "month"
+            ? {
+                date: recurring.date,
+              }
+            : {
+                month: recurring.month,
+                date: recurring.date,
+              }),
+        due_days: recurring.dueDays,
       },
     }),
     items: itemList,
@@ -208,7 +203,7 @@ exports.createInvoice = async (req, res) => {
 
     case "RECURRING":
       await scheduleRecurringInvoiceDispatch({
-        recurring: recurringValues,
+        recurring,
         _id,
         tz: timezone,
       });
@@ -240,14 +235,9 @@ exports.downloadInvoice = async (req, res) => {
     items,
     discountPercentage,
     taxPercentage,
-    baseCurrency,
     issueDate,
     dueDate,
   } = req.body;
-
-  // parse data
-  const conversion_rate = JSON.parse(conversionRate);
-  const contact_address = JSON.parse(contactAddress);
 
   // upload logo
   let companyLogo = null;
@@ -264,7 +254,7 @@ exports.downloadInvoice = async (req, res) => {
 
   // prepare item list and calculate total amount
   let totalCurrencyAmount = 0;
-  const itemList = JSON.parse(items).map((item) => {
+  const itemList = items.map((item) => {
     const category = req.userCategory.toLowerCase();
     if (category == "builder") {
       totalCurrencyAmount += item.price * 1;
@@ -285,8 +275,8 @@ exports.downloadInvoice = async (req, res) => {
     }
   });
   const totalCryptoAmount =
-    (totalCurrencyAmount * conversion_rate.cryptoAmount) /
-    conversion_rate.currencyAmount;
+    (totalCurrencyAmount * conversionRate.cryptoAmount) /
+    conversionRate.currencyAmount;
 
   // generate pdf
   const pdfBuffer = await generateInvoicePdfBuffer({
@@ -295,12 +285,12 @@ exports.downloadInvoice = async (req, res) => {
     contact_email: contactEmail,
     contact_phone: contactPhone,
     contact_address: {
-      city: contact_address.city,
-      zip: contact_address?.zip || "N/A",
-      state: contact_address?.state || "N/A",
-      country: contact_address.country,
-      country_code: contact_address.countryCode,
-      full_address: contact_address.fullAddress,
+      city: contactAddress.city,
+      zip: contactAddress?.zip || "N/A",
+      state: contactAddress?.state || "N/A",
+      country: contactAddress.country,
+      country_code: contactAddress.countryCode,
+      full_address: contactAddress.fullAddress,
     },
     deposit_crypto: depositCrypto,
     deposit_network: depositNetwork,
@@ -308,16 +298,15 @@ exports.downloadInvoice = async (req, res) => {
     invoice_number: invoiceNumber,
     order_description: orderDescription,
     conversion_rate: {
-      currency: conversion_rate.currency,
-      crypto: conversion_rate.crypto,
-      currency_amount: conversion_rate.currencyAmount,
-      crypto_amount: conversion_rate.cryptoAmount,
+      currency: conversionRate.currency,
+      crypto: conversionRate.crypto,
+      currency_amount: conversionRate.currencyAmount,
+      crypto_amount: conversionRate.cryptoAmount,
     },
     items: itemList,
     discount_percentage: discountPercentage,
     tax_percentage: taxPercentage,
     total_crypto_amount: totalCryptoAmount,
-    base_currency: baseCurrency,
     qrCode: await QRCode.toDataURL(depositAddress),
     userCategory: req.userCategory,
     companyName: "",
