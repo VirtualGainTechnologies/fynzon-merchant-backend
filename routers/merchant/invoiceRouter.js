@@ -581,15 +581,14 @@ const getAllInvoicesQueryValidator = [
   query("status")
     .optional()
     .isIn([
-      [
-        "SCHEDULED",
-        "PENDING",
-        "SUCCESS",
-        "FAILED",
-        "EXPIRED",
-        "REJECTED",
-        "PAUSED",
-      ],
+      "ALL",
+      "SCHEDULED",
+      "PENDING",
+      "SUCCESS",
+      "FAILED",
+      "EXPIRED",
+      "REJECTED",
+      "PAUSED",
     ])
     .withMessage("Invalid status"),
   query("startDate")
