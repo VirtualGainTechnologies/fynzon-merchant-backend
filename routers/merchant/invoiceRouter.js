@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { body } = require("express-validator");
+const { body, query } = require("express-validator");
 const moment = require("moment-timezone");
 
 const { uploadImage } = require("../../utils/imageUpload");
@@ -7,6 +7,7 @@ const { catchAsync } = require("../../utils/catchAsync");
 const {
   createInvoice,
   downloadInvoice,
+  getAllInvoices,
 } = require("../../controllers/merchant/invoiceController");
 const {
   verifyMerchantToken,
@@ -576,6 +577,56 @@ const downloadInvoiceValidator = [
     }),
 ];
 
+const getAllInvoicesQueryValidator = [
+  query("status")
+    .optional()
+    .isIn([
+      [
+        "SCHEDULED",
+        "PENDING",
+        "SUCCESS",
+        "FAILED",
+        "EXPIRED",
+        "REJECTED",
+        "PAUSED",
+      ],
+    ])
+    .withMessage("Invalid status"),
+  query("startDate")
+    .optional()
+    .custom((value) => {
+      const startDate = moment(value, "YYYY-MM-DD", true);
+      if (!startDate.isValid()) {
+        throw new Error("Invalid startDate format (YYYY-MM-DD)");
+      }
+      return true;
+    }),
+  query("endDate")
+    .optional()
+    .custom((value) => {
+      const endDate = moment(value, "YYYY-MM-DD", true);
+      if (!endDate.isValid()) {
+        throw new Error("Invalid endDate format (YYYY-MM-DD)");
+      }
+      return true;
+    }),
+  query("timezone")
+    .if((_value, { req }) => req.query.startDate && req.query.endDate)
+    .notEmpty()
+    .withMessage("The field timezone is required")
+    .bail()
+    .custom((value) => moment.tz.names().includes(value))
+    .withMessage("The field timezone is invalid"),
+  query("page")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("Page must be an integer"),
+  query("limit")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("Limit must be an integer minimum 1"),
+];
+
 router.post(
   "/create-invoice",
   uploadImage.single("companyLogo"),
@@ -590,6 +641,13 @@ router.post(
   downloadInvoiceValidator,
   catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
   catchAsync("downloadInvoice api", downloadInvoice),
+);
+
+router.get(
+  "/invoices",
+  getAllInvoicesQueryValidator,
+  catchAsync("verifyMerchantToken middleware", verifyMerchantToken),
+  catchAsync("getAllInvoices api", getAllInvoices),
 );
 
 module.exports = router;

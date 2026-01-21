@@ -4,6 +4,7 @@ const QRCode = require("qrcode");
 const {
   createInvoiceDoc,
   getInvoiceByFilter,
+  getInvoiceList,
 } = require("../../services/merchant/invoiceService");
 const AppError = require("../../utils/AppError");
 const {
@@ -368,4 +369,50 @@ exports.downloadInvoice = async (req, res) => {
   );
   res.setHeader("Content-Length", pdfBuffer.length);
   res.end(pdfBuffer);
+};
+
+exports.getAllInvoices = async (req, res) => {
+  const {
+    status = "ALL",
+    invoiceNumber,
+    contactEmail,
+    startDate,
+    endDate,
+    page = 0,
+    limit = 10,
+    timezone = "Asia/Kolkata",
+  } = req.query;
+
+  let options = {
+    status,
+    invoiceNumber,
+    contactEmail,
+    page,
+    limit,
+  };
+
+  if (startDate && endDate) {
+    const startOfDayIST = moment
+      .tz(startDate, timezone)
+      .startOf("day")
+      .utc()
+      .valueOf();
+    const endOfDayIST = moment
+      .tz(endDate, timezone)
+      .endOf("day")
+      .utc()
+      .valueOf();
+    options["startDate"] = startOfDayIST;
+    options["endDate"] = endOfDayIST;
+  }
+  const invoiceList = await getInvoiceList(options);
+  if (!invoiceList || !invoiceList.length) {
+    throw new AppError(400, "Failed to get invoice list");
+  }
+
+  res.status(200).json({
+    message: "Invoices retrieved successfully",
+    error: false,
+    data: invoiceList[0],
+  });
 };
