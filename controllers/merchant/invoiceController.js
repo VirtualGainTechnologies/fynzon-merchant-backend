@@ -384,6 +384,7 @@ exports.getAllInvoices = async (req, res) => {
   } = req.query;
 
   let options = {
+    userId: req.userId,
     status,
     invoiceNumber,
     contactEmail,

@@ -29,9 +29,11 @@ exports.getInvoiceList = (options) => {
     endDate,
     page,
     limit,
+    userId,
   } = options;
-  
+
   const filter = {
+    user_id: userId,
     ...(status !== "ALL" && { status }),
     ...(invoiceNumber && {
       invoice_number: { $regex: invoiceNumber, $options: "i" },
