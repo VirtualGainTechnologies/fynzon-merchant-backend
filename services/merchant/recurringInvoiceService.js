@@ -1,7 +1,9 @@
-const { RecurringInvoiceModel } = require("../../models/merchant/recurringInvoiceModel");
+const {
+  RecurringInvoiceModel,
+} = require("../../models/merchant/recurringInvoiceModel");
 
-exports.createRecurringInvoiceDoc = (object) => {
-  return RecurringInvoiceModel.create(object);
+exports.createRecurringInvoiceDoc = (data, session) => {
+  return RecurringInvoiceModel.create([data], { session });
 };
 
 exports.getRecurringInvoiceById = (id, projections = null, options = {}) => {
@@ -15,7 +17,7 @@ exports.updateRecurringInvoiceById = (id, updateData, options = {}) => {
 exports.getRecurringInvoiceByFilter = (
   filter = {},
   projections = null,
-  options = {}
+  options = {},
 ) => {
   return RecurringInvoiceModel.findOne(filter, projections, options);
 };

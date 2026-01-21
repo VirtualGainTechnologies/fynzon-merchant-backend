@@ -22,6 +22,74 @@ const { getMerchantById } = require("../../services/merchant/authService");
 const {
   getContactByFilter,
 } = require("../../services/merchant/contactService");
+const { runTxnWithRetry } = require("../../services/shared/mongooseTxnService");
+
+const handleRecurrentInvoice = async (data) => {
+  try {
+    await runTxnWithRetry(async (session) => {
+      const {
+        invoice_id,
+        deposit_address,
+        deposit_crypto,
+        deposit_network,
+        issue_date,
+        due_date,
+        due_days,
+        tz,
+      } = data;
+
+      // generate recurring invoice
+      const recurringInvoice = await createRecurringInvoiceDoc(
+        {
+          invoice_id,
+          deposit_address,
+          deposit_crypto,
+          deposit_network,
+          issue_date,
+          due_date,
+        },
+        session,
+      );
+      if (!recurringInvoice) {
+        throw new AppError(400, "Failed to generate recurring invoice ");
+      }
+
+      // update invoice issueDate & dueDate
+      const updatedInvoice = await updateInvoiceById(
+        invoice_id,
+        {
+          issue_date,
+          due_date,
+        },
+        { new: true, session },
+      );
+      if (!updatedInvoice) {
+        throw new AppError(400, "Failed to update invoice");
+      }
+
+      // schedule expiry job for recurring invoice
+      await scheduleRecurringInvoiceExpiry({
+        issue_date,
+        _id: invoice_id.toString(),
+        due_days,
+      });
+
+      // schedule invoice alert job
+      if (due_days !== 0) {
+        await scheduleInvoiceAlert({
+          alert_date: moment()
+            .tz(tz)
+            .add(due_days * 1, "days")
+            .format("YYYY-MM-DD"),
+          _id: invoice_id.toString(),
+          tz,
+        });
+      }
+    });
+  } catch (err) {
+    throw err;
+  }
+};
 
 exports.handleDispatchInvoice = async (jobData) => {
   try {
@@ -36,7 +104,6 @@ exports.handleDispatchInvoice = async (jobData) => {
       throw new AppError(400, "Failed to fetch invoice");
     }
     const {
-      issue_date,
       due_date,
       recurring,
       invoice_type,
@@ -150,9 +217,9 @@ exports.handleDispatchInvoice = async (jobData) => {
       throw new AppError(400, sendEmail.message);
     }
 
+    // handle recurrent invoice
     if (invoice_type == "RECURRING") {
-      // generate recurring invoice
-      const recurringInvoice = await createRecurringInvoiceDoc({
+      await handleRecurrentInvoice({
         invoice_id: invoice._id,
         deposit_address,
         deposit_crypto,
@@ -162,16 +229,8 @@ exports.handleDispatchInvoice = async (jobData) => {
           .tz(tz)
           .add(recurring?.due_days * 1, "days")
           .format("YYYY-MM-DD"),
-      });
-      if (!recurringInvoice) {
-        throw new AppError(400, "Failed to generate recurring invoice ");
-      }
-
-      // schedule expiry job for recurring invoice
-      await scheduleRecurringInvoiceExpiry({
-        issue_date,
-        _id,
         due_days: recurring?.due_days,
+        tz,
       });
     }
 
@@ -183,17 +242,6 @@ exports.handleDispatchInvoice = async (jobData) => {
       if (!isToday) {
         await scheduleInvoiceAlert({
           alert_date: dueDate,
-          _id,
-          tz,
-        });
-      }
-    } else {
-      if (recurring?.due_days !== 0) {
-        await scheduleInvoiceAlert({
-          alert_date: moment()
-            .tz(tz)
-            .add(recurring?.due_days * 1, "days")
-            .format("YYYY-MM-DD"),
           _id,
           tz,
         });

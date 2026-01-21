@@ -3,7 +3,6 @@ const retry = require("async-retry");
 
 const { logger } = require("../../utils/winstonLogger");
 
-
 exports.commitWithRetry = async (session) => {
   await retry(
     async (bail) => {
@@ -95,4 +94,35 @@ exports.isTransientError = (error) => {
     return true;
   }
   return false;
+};
+
+exports.runTxnWithRetry = async (fn) => {
+  await retry(
+    async (bail, attempt) => {
+      const session = await mongoose.startSession();
+      session.startTransaction();
+      try {
+        await fn(session);
+      } catch (err) {
+        if (session.inTransaction()) {
+          await session.abortTransaction();
+        }
+        if (this.isTransientError(err)) {
+          console.log(`Attempt ${attempt} failed → retrying...`);
+          throw err;
+        } else {
+          bail(err);
+        }
+      } finally {
+        session.endSession();
+      }
+    },
+    {
+      retries: 5,
+      factor: 2,
+      minTimeout: 100,
+      maxTimeout: 2000,
+      randomize: true,
+    }
+  );
 };
